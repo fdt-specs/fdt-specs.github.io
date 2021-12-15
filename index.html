@@ -175,12 +175,23 @@
          
          <h2 id="maincomponents"><span class="secno">2 </span> Main components</h2>
 		 
-		 <p>As depicted in Figure 2.1, the main components of the FAIR Data Train are:</p>
+		 <p>As depicted in Figure 2.1, the main elements (applications, roles and interaction mechanisms) of the FAIR Data Train are:</p>
          <ul>
-             <li><strong>FAIR Data Station</strong>: responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related Data Controllers;</li>
-             <li><strong>Station Directory</strong>: responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related Data Controllers;</li>
-             <li><strong>FAIR Data Station</strong>: responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related Data Controllers;</li>
+             <li><strong>FAIR Data Station</strong>: application responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related <code>Data Controllers</code>;</li>
+             <li><strong>Personal Gateway</strong>: application responsible to intermediate the communication between <code>Data Stations</code> and <code>Data Controllers</code>. The <code>Data Controller</code> exercises its/his/her control over the data available in different <code>Data Stations</code> through the <code>Personal Gateway</code> </li>
+             <li><strong>Station Directory</strong>: application responsible to index metadata from the reachable <code>Data Stations</code> and allow users (client applications) to search for data available on those stations.</li>
+             <li><strong>Train</strong>: represents the way data consumers interact with the data available on <code>Data Stations</code>. The <code>Trains</code> can be of different types, such as API calls, container images, queries, messages, etc. <code>Trains</code> can only visit <code>Data Stations</code> that support the same type of interaction, e.g., a SQL query train requires a station that supports this type of query;</li>
+             <li><strong>Train Handler</strong>: application that represents client applications that can interact with the <code>Station Directory</code> to discover the existance and location of data and <code>Data Stations</code> to actually work with the available data;</li>
+             <li><strong>Stations Owner</strong>: role played by stakeholders that are responsible for running <code>Data Stations</code>;</li>
+             <li><strong>Data Controller</strong>: role played by individuals or organizations that have controlling rights over data;</li>
+             <li><strong>Train Owner</strong>: role played by individuals or organizations responsible for sending <code>Trains</code> to <code>Data Stations</code>;</li>
+             <li><strong>Train Provider</strong>: role played by individuals or organizations that create <code>Trains</code> to be used by themselves or others. When a <code>Train Provider</code> uses its own created <code>Train</code> and sends it to access data in <code>Data Stations</code>, it is, at this moment, playing also the role of <code>Train Owner</code>.</li>
          </ul>
+         
+         <figure>
+			 <p><img src="images/highlevelview.png" alt="Highlevel architecture view"></p>
+			 <figcaption><span class="marker">Figure 2.1</span> High-level architecture of the FAIR Data Train.</figcaption>
+		 </figure>
          
      </main>
      <script src="/scripts/fixup.js"></script>
