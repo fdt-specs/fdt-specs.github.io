@@ -13,7 +13,7 @@
     <meta charset="utf-8">
       <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <title>FAIR Data Point specifications</title>
+      <title>FAIR Data Train specifications</title>
       <link rel="stylesheet" href="style/base.css">
       <style>
       .example::before {
@@ -37,7 +37,7 @@
 			 </a>
             -->
 	   </p>
-		 <h1 id="title">FAIR Data Train</h1>
+		 <h1 id="title">FAIR Data Train general architecture</h1>
 		 <h2 id="subtitle">Working Draft, <time class="dt-updated" datetime="2021-12-14">14 December 2021</time>
 		 </h2>
 		 <div>
@@ -70,14 +70,106 @@
 	 </div>
 	 <h2 id="abstract">Abstract</h2>
 	 <div>
-		 <p>This document provides specifications for the FAIR Data Train (FDT). The document includes architecture of the core components, metadata structure and schema, API and validation rules.</p>
+		 <p>This document describes the general architecture of the FAIR Data Train (FDT). The architecture includes the FDT's the core components, metadata structure and schema, API and validation rules.</p>
 	 </div>
 	 <h2 id="status">Status of this document</h2>
 	 <div>
 		 <p> This is a public copy of the editors’ draft. It is provided for discussion only and may change at any moment. Its publication here does not imply endorsement of its contents by any organization.	Don’t cite this document other than as work in progress. </p>
 		 <p> This document was produced by the FAIR Data Team.</p>
 		 <p></p>
-	 </div>		 
-    <script src="/scripts/fixup.js"></script>
-	</body>
+	 </div>
+     
+     <!-- Navigation side panel -->
+     <nav id="toc">
+         <h2>Table of Contents</h2>
+		 <ol class="toc" role="directory">
+			 <li><a href="#intro"><span class="secno">1</span>Introduction</a></li>
+				 <ol>
+					 <li><a href="#purpose"><span class="secno">1.1</span>Purpose</a></li>
+					 <li><a href="#conventions"><span class="secno">1.2</span>Document Conventions</a></li>
+				 </ol>
+             <!--
+			 <li><a href="#overalldescription"><span class="secno">2</span>Overall Description</a></li>			 
+			 <ol>
+				 <li><a href="#usagescenarios"><span class="secno">2.1</span>Usage scenarios</a></li>
+				 <ol>
+					 <li>
+						 <a href="#datadiscovery"><span class="secno">2.1.1</span>Data discovery</a>
+					 </li>
+					 <li>
+						 <a href="#dataaccess"><span class="secno">2.1.2</span>Data access</a>
+					 </li>
+					 <li>
+						 <a href="#datapublication"><span class="secno">2.1.3</span>(Meta)Data publication</a>
+					 </li>
+					 <li>
+						 <a href="#othercontent"><span class="secno">2.1.4</span>Publishing other types of content</a>
+					 </li>
+				 </ol>
+				 <ol>
+					 <li><a href="#goals"><span class="secno">2.2</span>Goals</a></li>
+				 </ol>
+				 <ol>
+					 <li><a href="#productperspective"><span class="secno">2.2</span>Product Perspective</a></li>
+				 </ol>
+			 </ol>
+			 
+			 <li><a href="#intro"><span class="secno">3</span>Architecture</a></li>
+			 
+			 <li><a href="#metadata"><span class="secno">4</span>Metadata</a></li>
+			 <ol>
+				 <li><a href="#navigationinformation"><span class="secno">4.1</span>Navigation information</a></li>
+				 <li><a href="#metadataschemas"><span class="secno">4.2</span>Metadata schemas</a></li>
+				 <ol>
+					 <li>
+						 <a href="#repositorymetadata"><span class="secno">4.2.1</span>Metadata Service metadata</a>
+					 </li>
+					 <li>
+						 <a href="#catalogmetadata"><span class="secno">4.2.2</span>Catalog metadata</a>
+					 </li>
+				 </ol>
+				 <ol>
+					 <li><a href="#resourceextensions"><span class="secno">4.3</span>Resource extensions</a></li>
+				 </ol>
+			 </ol>
+			 
+			 <li><a href="#api"><span class="secno">5</span>Application Programming Interface (API)</a></li>
+			 
+			 <li><a href="#compliance"><span class="secno">6</span>FDP Specification Compliance</a></li>
+
+			 <li><a href="#references"><span class="secno">A</span>References</a></li>
+			 <ol>
+				 <li><a href="#normative"><span class="secno">A.1</span>Normative References</a></li>
+				 <li><a href="#informative"><span class="secno">A.2</span>Informative References</a></li>
+			 </ol>
+            -->
+		 </ol>
+    </nav>
+     
+     <!-- Content of the main panel -->
+	 <main>
+		 <h2 id="intro"><span class="secno">1 </span> Introduction</h2>
+		 
+		 <p>The FAIR Data Train (FDT) comprises a set of application to support the findability, accessibility, interoperability and reusability of data following the FAIR principles <a href="#biblio-fairprinciples">[FAIR-principles]</a>. In this document, we consider data not only the content of artefacts such as databases, tables, graphs, etc., but also other informational artefacts such as controlled vocabularies, ontologies, models, etc. The architecture defines a number of key elements to support:</p>
+		 
+		 <ul>
+			 <li>Provisioning of metadata to describe data;</li>
+			 <li>A common representation format <a href="#biblio-rdf">[RDF]</a> to express the metadata in a machine-actionable manner;</li>
+			 <li>A common approach to inform to clients how to navigate through the metadata structure;</li>
+			 <li>A common representation format <a href="#biblio-shacl">[SHACL]</a> to represent each metadata record's schema;</li>
+             <li>A common way of describing how data sources support interactions with their content;</li>
+             <li>A common way to represent how client applications can interact with data.</li>
+		 </ul>
+         
+		 <p>The main goal of the FDT general architecture is to define a set of behaviours, interfaces and protocols to improve interoperability among data sources and data processing services. To fulfill this goal, this document contains a set of specifications to help developers to extend the functionality of their applications so these applications can also be part of the FAIR Data Train ecosystem.</p>
+		 
+		 <h3 id="purpose"><span class="secno">1.1 </span>Purpose</h3>
+		 <p>The purpose of this document is to present the general architecture of the FAIR Data Train. This document includes requirements, architecture, design principles and design of the FDT. This architecture is primarily intended to be a reference for developers willing to add the FDT functionality into their existing applications or develop their own FAIR Data Train implementation. In order to better understand this specification, a knowledge of RDF, LDP, SHACL and REST APIs is required.</p>
+		 
+		 <h3 id="conventions"><span class="secno">1.2 </span>Document conventions</h3>
+		 <p>Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119 terminology. The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT",  "RECOMMENDED", "MAY", and "OPTIONAL" in the normative parts of this document are to be interpreted as described in RFC 2119. However, for readability, these words do not appear in all uppercase letters in this specification. </p>
+		 <p>All of the text of this specification is normative except sections explicitly marked as non-normative, examples, and notes. <a href="#biblio-rfc2119">[RFC2119]</a></p>
+     </main>
+     <script src="/scripts/fixup.js"></script>
+	 </body>
 </html>
