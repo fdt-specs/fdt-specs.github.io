@@ -38,7 +38,7 @@
             -->
 	   </p>
 		 <h1 id="title">FAIR Data Train general architecture</h1>
-		 <h2 id="subtitle">Working Draft, <time class="dt-updated" datetime="2021-12-14">15 December 2021</time>
+		 <h2 id="subtitle">Working Draft, <time class="dt-updated" datetime="2021-12-14">15 February 2023</time>
 		 </h2>
 		 <div>
 			 <dl>
@@ -75,7 +75,7 @@
 	 <h2 id="status">Status of this document</h2>
 	 <div>
 		 <p> This is a public copy of the editors’ draft. It is provided for discussion only and may change at any moment. Its publication here does not imply endorsement of its contents by any organization.	Don’t cite this document other than as work in progress. </p>
-		 <p> This document was produced by the FAIR Data Team.</p>
+		 <p> This document was created by the FAIR Data Team.</p>
 		 <p></p>
 	 </div>
      
@@ -151,20 +151,20 @@
 	 <main>
         <h2 id="intro"><span class="secno">1 </span> Introduction</h2>
 		 
-        <p>The FAIR Data Train (FDT) comprises a set of application to support the findability, accessibility, interoperability and reusability of data following the FAIR principles <a href="#biblio-fairprinciples">[FAIR-principles]</a>. The FDT follows the analogy of a train system where we have stations that make data available and trains, representing the analysis/processing algorithms visit stations to process and analyse them. Additionaly, a station directory can be consulted to verify which station provide which data. This is accomplished by the station directory by indexing the metadata of the data stations and providing search capabilities.</p>
+        <p>The FAIR Data Train (FDT) comprises a set of types of applications to support the findability, accessibility, interoperability and reusability of data following the FAIR principles <a href="#biblio-fairprinciples">[FAIR-principles]</a>. The FDT follows the analogy of a train system where we have two main elements, stations and trains. Stations are responsible of making data (or other types of digital objects) available and provide metadata about itself (the Station) and its content (the data or other types of digital objects). Trains represent analysis/processing algorithms that visit stations to process and analyse data. Additionaly, a Station Directory can be consulted to verify which station provide which data. The Station Directory is a special kind of Station which indexes the metadata of other stations and provide search capabilities.</p>
          
-        <p>In this document, we consider data not only the content of artefacts such as databases, tables, graphs, etc., but also other informational artefacts such as controlled vocabularies, ontologies, models, etc. The architecture defines a number of key elements to support:</p>
+        <p>In this document, we consider data not only the content of artefacts such as databases, tables, graphs, etc., but also other types of digital objects such as controlled vocabularies, ontologies, models, etc. From now on, unless otherwise explained we use the terms data and other types of digital objects interchangeably. The FAIR Data Train architecture defines a number of key elements to support:</p>
 		 
 		<ul>
-		    <li>Provisioning of metadata to describe data;</li>
+		    <li>Provisioning of metadata to describe digital objects;</li>
 			<li>A common representation format <a href="#biblio-rdf">[RDF]</a> to express the metadata in a machine-actionable manner;</li>
-			<li>A common approach to inform to clients how to navigate through the metadata structure;</li>
+			<li>A common approach to inform clients on how to navigate through the metadata structure;</li>
 			<li>A common representation format <a href="#biblio-shacl">[SHACL]</a> to represent each metadata record's schema;</li>
-            <li>A common way of describing how data sources support interactions with their content;</li>
-            <li>A common way to represent how client applications can interact with data.</li>
+            <li>A common way of describing how data sources support interactions with their content in terms of metadata properties of the station;</li>
+            <li>A common way to represent how client applications can interact with data, i.e., interfaces and protocols for the station to accept incoming trains</li>
         </ul>
          
-		<p>The main goal of the FDT general architecture is to define a set of behaviours, interfaces and protocols to improve interoperability among data sources and data processing services. To fulfill this goal, this document contains a set of specifications to help developers to extend the functionality of their applications so these applications can also be part of the FAIR Data Train ecosystem.</p>
+		<p>The main goal of the FDT general architecture is to define a set of behaviours, interfaces and protocols to improve interoperability among data sources and data processing services. To fulfill this goal, this document contains a set of specifications to help developers to build new applications or to extend the functionality of their existing applications in a way that these applications can also be part of the FAIR Data Train ecosystem. The enviosined scenario is the one with a multitude of trains, stations and client applications independently created and able to interact with one another because they all follow the same base guidelines (interfaces, protocols, representation formats, etc.).</p>
 		 
 		 <h3 id="purpose"><span class="secno">1.1 </span>Purpose</h3>
 		 <p>The purpose of this document is to present the general architecture of the FAIR Data Train. This document includes requirements, architecture, design principles and design of the FDT. This architecture is primarily intended to be a reference for developers willing to add the FDT functionality into their existing applications or develop their own FAIR Data Train implementation. In order to better understand this specification, a knowledge of RDF, LDP, SHACL and REST APIs is required.</p>
@@ -177,12 +177,12 @@
 		 
 		 <p>As depicted in Figure 2.1, the main elements (applications, roles and interaction mechanisms) of the FAIR Data Train are:</p>
          <ul>
-             <li><strong>FAIR Data Station</strong>: application responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related <code>Data Controllers</code>;</li>
+             <li><strong>FAIR Data Station</strong>: application type responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related <code>Data Controllers</code>. The Data Station is also able to register itself in a Station Directory to have its metadata indexed by that directory;</li>
              <li><strong>Personal Gateway</strong>: application responsible to intermediate the communication between <code>Data Stations</code> and <code>Data Controllers</code>. The <code>Data Controller</code> exercises its/his/her control over the data available in different <code>Data Stations</code> through the <code>Personal Gateway</code> </li>
              <li><strong>Station Directory</strong>: application responsible to index metadata from the reachable <code>Data Stations</code> and allow users (client applications) to search for data available on those stations.</li>
              <li><strong>Train</strong>: represents the way data consumers interact with the data available on <code>Data Stations</code>. The <code>Trains</code> can be of different types, such as API calls, container images, queries, messages, etc. <code>Trains</code> can only visit <code>Data Stations</code> that support the same type of interaction, e.g., a SQL query train requires a station that supports this type of query;</li>
              <li><strong>Train Handler</strong>: application that represents client applications that can interact with the <code>Station Directory</code> to discover the existance and location of data and <code>Data Stations</code> to actually work with the available data;</li>
-             <li><strong>Stations Owner</strong>: role played by stakeholders that are responsible for running <code>Data Stations</code>;</li>
+             <li><strong>Station Owner</strong>: role played by stakeholders that are responsible for managing and running <code>Data Stations</code>. Since the Station Directory is a specialisation of Data Station, the same role of Station Owner applies to the Station Directory;</li>
              <li><strong>Data Controller</strong>: role played by individuals or organizations that have controlling rights over data;</li>
              <li><strong>Train Owner</strong>: role played by individuals or organizations responsible for sending <code>Trains</code> to <code>Data Stations</code>;</li>
              <li><strong>Train Provider</strong>: role played by individuals or organizations that create <code>Trains</code> to be used by themselves or others. When a <code>Train Provider</code> uses its own created <code>Train</code> and sends it to access data in <code>Data Stations</code>, it is, at this moment, playing also the role of <code>Train Owner</code>.</li>
@@ -193,6 +193,14 @@
 			 <figcaption><span class="marker">Figure 2.1</span> High-level architecture of the FAIR Data Train.</figcaption>
 		 </figure>
          
+		 <h2 id="datastation"><span class="secno">3 </span> FAIR Data Station</h2>
+		 
+		 <h2 id="stationdirectory"><span class="secno">4 </span> Station Directory</h2>
+		 
+		 <h2 id="personalgateway"><span class="secno">5 </span> Personal Gateway</h2>
+		 
+		 <h2 id="trainhandler"><span class="secno">6 </span> Train Handler</h2>
+		 
      </main>
      <script src="/scripts/fixup.js"></script>
 	 </body>
