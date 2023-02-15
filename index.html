@@ -190,16 +190,28 @@
          
          <figure>
 			 <p><img src="images/highlevelview.png" alt="Highlevel architecture view"></p>
-			 <figcaption><span class="marker">Figure 2.1</span> High-level architecture of the FAIR Data Train.</figcaption>
+			 <figcaption><span class="marker">Figure 2.1</span> High-level architecture of the FAIR Data Train</figcaption>
 		 </figure>
          
-		 <h2 id="datastation"><span class="secno">3 </span> FAIR Data Station</h2>
+		 <h3 id="datastation"><span class="secno">2.1 </span> FAIR Data Station</h3>
 		 
-		 <h2 id="stationdirectory"><span class="secno">4 </span> Station Directory</h2>
+		 <p>Since the purpose of the FAIR Data Train architecture is to define a set of desired behaviours that applications should expose and support, the definition of the FAIR Data Station (FDS) should specify the station's interface. For simplicity, we first start by dividing the <code>FDS API</code> in following three major groups, namely, <code>Metadata Interface</code>, <code>Station Interface</code> and <code>Content Interaction Interface</code>, as depicted in Figure 2.2. Each one of these interface groups are intended to expose the interfaces of a number of services available at the FDS. </p>
 		 
-		 <h2 id="personalgateway"><span class="secno">5 </span> Personal Gateway</h2>
+		 <figure>
+			 <p><img src="images/fds_simplified_view.png" alt="FDS interface groups" width="80%"></p>
+			 <figcaption><span class="marker">Figure 2.2</span> Interface groups of the FAIR Data Station</figcaption>
+		 </figure>
 		 
-		 <h2 id="trainhandler"><span class="secno">6 </span> Train Handler</h2>
+		 <p>In this Figure 2.2, it is also made explicit that the interaction with the data happens through the FDS' <code>Interaction Component</code>, which connects with the actual <code>Data Storage</code> component.</p>
+		 
+		 <h4 id="metadatainterface"><span class="secno">2.1.1</span> Metadata Interface</h4>
+		 
+		 
+		 <h3 id="stationdirectory"><span class="secno">2.2 </span> Station Directory</h3>
+		 
+		 <h3 id="personalgateway"><span class="secno">2.3 </span> Personal Gateway</h3>
+		 
+		 <h3 id="trainhandler"><span class="secno">2.4 </span> Train Handler</h3>
 		 
      </main>
      <script src="/scripts/fixup.js"></script>
