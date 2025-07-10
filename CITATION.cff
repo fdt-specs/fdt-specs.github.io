@@ -1,0 +1,23 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: FAIR Data Train
+message: >-
+  If you use this specification, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Luiz Olavo
+    family-names: Bonino da Silva Santos
+    email: l.o.boninodasilvasantos@utwente.nl
+    affiliation: University of Twente
+    orcid: 'https://orcid.org/0000-0002-1164-1351'
+  - given-names: Kees
+    family-names: Burger
+    affiliation: Health RI
+  - given-names: Rajaram
+    family-names: Kaliyaperumal
+    affiliation: Janssen Pharmaceuticals
+    orcid: 'https://orcid.org/0000-0002-1215-167X'
+license: MIT
