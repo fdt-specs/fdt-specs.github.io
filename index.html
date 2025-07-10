@@ -38,7 +38,7 @@
             -->
 	   </p>
 		 <h1 id="title">FAIR Data Train general architecture</h1>
-		 <h2 id="subtitle">Working Draft, <time class="dt-updated" datetime="2021-12-14">15 February 2023</time>
+		 <h2 id="subtitle">Working Draft, <time class="dt-updated" datetime="2021-12-14">10 July 2025</time>
 		 </h2>
 		 <div>
 			 <dl>
@@ -58,10 +58,11 @@
 				 <dd><a href="https://github.com/FAIRDataTeam/FAIRDataTrain">https://github.com/FAIRDataTeam/FAIRDataTrain</a></dd>
 				 <dt>Issue Tracking:</dt>
 				 <dd><a href="https://github.com/FAIRDataTeam/FAIRDataTrain/issues">GitHub</a></dd>
-				 <dt class="editor">Editors:</dt>
-				 <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:l.o.bonino@utwente.nl">Luiz Olavo Bonino</a> (<span class="p-org org">University of Twente, Leiden University Medical Center, GO FAIR International Support and Coordination Office</span>)</dd>
-				 <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:kees.burger@dtls.nl">Kees Burger</a> (<span class="p-org org">Leiden University Medical Center</span>)</dd>
-				 <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:r.kaliyaperumal@lumc.nl">Rajaram Kaliyaperumal</a> (<span class="p-org org">Leiden University Medical Center</span>)</dd>
+				 <dt class="editor">Editor:</dt>
+				 <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:l.o.boninodasilvasantos@utwente.nl">Luiz Olavo Bonino</a> (<span class="p-org org">University of Twente, Leiden University Medical Center</span>)</dd>
+				 <dt class="contributor">Contributors:</dt>
+			   <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:kees.burger@health-ri.nl">Kees Burger</a> (<span class="p-org org">Health RI</span>)</dd>
+				 <dd class="editor p-author h-card vcard"><a class="p-name fn u-url url" href="mailto:RKaliyap@ITS.JNJ.com">Rajaram Kaliyaperumal</a> (<span class="p-org org">Janssen Pharmaceuticals</span>)</dd>
 			 </dl>
 		 </div>
 		 <div></div>
@@ -151,20 +152,20 @@
 	 <main>
         <h2 id="intro"><span class="secno">1 </span> Introduction</h2>
 		 
-        <p>The FAIR Data Train (FDT) comprises a set of types of applications to support the findability, accessibility, interoperability and reusability of data following the FAIR principles <a href="#biblio-fairprinciples">[FAIR-principles]</a>. The FDT follows the analogy of a train system where we have two main elements, stations and trains. Stations are responsible of making data (or other types of digital objects) available and provide metadata about itself (the Station) and its content (the data or other types of digital objects). Trains represent analysis/processing algorithms that visit stations to process and analyse data. Additionaly, a Station Directory can be consulted to verify which station provide which data. The Station Directory is a special kind of Station which indexes the metadata of other stations and provide search capabilities.</p>
+        <p>The FAIR Data Train (FDT) is a FAIR-based platform framework that aims at guarateeing a specific level of interoperability among its participant elements/components. It defines a set of application types and their expected behaviors to support the findability, accessibility, interoperability and reusability of data following the FAIR principles<a href="#biblio-fairprinciples"> [FAIR-principles]</a>. The FDT follows the analogy of a train system where we have two main elements, stations and trains. FAIR Stations are responsible of making data (or other types of digital objects) available and provide metadata about themselves (the Stations) and their content (data or other types of digital objects). FAIR Trains represent analysis/processing algorithms that are sent to FAIR Stations to process and/or analyze data. Additionally, a Station Directory is a special kind of FAIR Station which indexes the metadata of other stations and provide search capabilities. Therefore, Station Directories can be consulted to verify which station provides which data. </p>
          
-        <p>In this document, we consider data not only the content of artefacts such as databases, tables, graphs, etc., but also other types of digital objects such as controlled vocabularies, ontologies, models, etc. From now on, unless otherwise explained we use the terms data and other types of digital objects interchangeably. The FAIR Data Train architecture defines a number of key elements to support:</p>
+        <p>In this document, we consider data not only the content of artefacts such as databases, tables, graphs, etc., but also other types of digital objects such as controlled vocabularies, ontologies, models, etc. From now on, unless otherwise explained we use the terms data and other types of digital objects interchangeably. The FAIR Data Train architecture defines a number of key capabilities:</p>
 		 
 		<ul>
 		    <li>Provisioning of metadata to describe digital objects;</li>
 			<li>A common representation format <a href="#biblio-rdf">[RDF]</a> to express the metadata in a machine-actionable manner;</li>
 			<li>A common approach to inform clients on how to navigate through the metadata structure;</li>
-			<li>A common representation format <a href="#biblio-shacl">[SHACL]</a> to represent each metadata record's schema;</li>
+			<li>A common representation format <a href="#biblio-shacl">[SHACL]</a> for the metadata schemas;</li>
             <li>A common way of describing how data sources support interactions with their content in terms of metadata properties of the station;</li>
             <li>A common way to represent how client applications can interact with data, i.e., interfaces and protocols for the station to accept incoming trains</li>
         </ul>
          
-		<p>The main goal of the FDT general architecture is to define a set of behaviours, interfaces and protocols to improve interoperability among data sources and data processing services. To fulfill this goal, this document contains a set of specifications to help developers to build new applications or to extend the functionality of their existing applications in a way that these applications can also be part of the FAIR Data Train ecosystem. The enviosined scenario is the one with a multitude of trains, stations and client applications independently created and able to interact with one another because they all follow the same base guidelines (interfaces, protocols, representation formats, etc.).</p>
+		<p>The main goal of the FDT general architecture is to define a set of behaviours, interfaces and protocols to improve interoperability among data sources and data processing services. To fulfill this goal, this document contains a set of specifications to help developers to build new applications or to extend the functionality of their existing applications in a way that these applications can also be part of the FAIR Data Train ecosystem. The envisioned scenario is the one with a multitude of trains, stations and client applications independently created and able to interact with one another because they all follow the same base guidelines (interfaces, protocols, representation formats, etc.).</p>
 		 
 		 <h3 id="purpose"><span class="secno">1.1 </span>Purpose</h3>
 		 <p>The purpose of this document is to present the general architecture of the FAIR Data Train. This document includes requirements, architecture, design principles and design of the FDT. This architecture is primarily intended to be a reference for developers willing to add the FDT functionality into their existing applications or develop their own FAIR Data Train implementation. In order to better understand this specification, a knowledge of RDF, LDP, SHACL and REST APIs is required.</p>
@@ -206,6 +207,14 @@
 		 
 		 <h4 id="metadatainterface"><span class="secno">2.1.1</span> Metadata Interface</h4>
 		 
+		 <p>The <code>Metadata Interface</code> complies with the <a href="https://specs.fairdatapoint.org">FAIR Data Point specifications</a>.</p>
+		 <p>TODO: add details from the FDP specs.</p>
+		 
+		 <h4 id="stationinterface"><span class="secno">2.1.2</span> Station Interface</h4>
+		 
+		 <p>The <code>Station Interface</code> is repos</p>
+		 
+		 <h4 id="contentinteractioninterface"><span class="secno">2.1.3</span> Content Interaction Interface</h4>
 		 
 		 <h3 id="stationdirectory"><span class="secno">2.2 </span> Station Directory</h3>
 		 
