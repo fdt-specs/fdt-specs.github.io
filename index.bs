@@ -187,7 +187,7 @@ a role may be played by an organisation or, where the deployment admits it, by a
   <tbody>
   <tr><td><dfn export>Data Controller</dfn><td>An organisation or a natural person with authority over data hosted at one or more stations<td>Authors the access conditions over their data, as ODRL offers; approves agreements where a person is required to; may revoke an agreement they granted. The identified `assigner` of every agreement over their resources. Distinct from the Station Owner (ADR-011): hosting data is not controlling it. Acts through a station's console or, across stations, through an Individual Gateway.
   <tr><td><dfn export>Station Owner</dfn><td>The organisation (or, in the personal profile, the person) operating a station<td>Sets station-wide policy — quotas, permitted mechanisms, networks served — orthogonal to the controllers' conditions. The effective decision over a request is the conjunction of the controller's offer and the owner's policy.
-  <tr><td><dfn export>Data Consumer</dfn> / <dfn export>Train Owner</dfn><td>The party accountable for a run<td>The `assignee` of every agreement a run concludes; submits trains through a Train Handler and receives inspected, non-personal results.
+  <tr><td><dfn export>Data Consumer</dfn> / <dfn export>Train Owner</dfn><td>The party accountable for a run<td>The `assignee` of every agreement a run concludes; submits trains through a Train Handler and receives inspected results of `Aggregate` class.
   <tr><td><dfn export>Train Creator</dfn><td>The party that created a train and publishes it<td>Offers the train as a contracted asset through a Train Depot, under their own licence; signs what they publish. When a creator sends their own train, they also play the Train Owner role.
   <tr><td>Train Handler operator<td>Runs dispatch and orchestration infrastructure<td>Not a party to any agreement; may hold aggregate results only (ADR-015).
   <tr><td>Registry operator, Train Depot operator<td>Run a registry or a depot<td>A registry harvests and indexes; it is never a trust anchor. A depot is the authority for the trains it holds — bytes, digests, declared parameters and output, the creator's offer and keys.
@@ -206,7 +206,7 @@ a role may be played by an organisation or, where the deployment admits it, by a
   <thead><tr><th>Component<th>Responsibility
   <tbody>
   <tr><td><dfn export>Data Station</dfn><td>Hosts digital objects of any kind — datasets, and services such as identifier translation or vocabulary alignment; publishes FAIR metadata about itself and what it hosts; receives trains; negotiates an agreement per visit on arrival; enforces policy at three checkpoints; executes the train through an interaction-mechanism adapter; returns the inspected result, or lets inspected state travel onward. [[#datastation]].
-  <tr><td><dfn export>Train Handler</dfn><td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the non-personal results and provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. [[#trainhandler]].
+  <tr><td><dfn export>Train Handler</dfn><td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the `Aggregate`-class results and the provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. [[#trainhandler]].
   <tr><td><dfn export>Individual Gateway</dfn><td>The controller-side agent for one controller across every station hosting their data: author and revoke access conditions, review the agreements concluded over their data and the audit slice that touched it, receive and decide approval requests, exercise opt-out. [[#gateway]].
   <tr><td><dfn export>FDT Registry</dfn><td>A metadata registry: harvests and indexes what stations and depots publish, and answers which stations hold the data a train needs. An index and never a trust anchor. [[#registry]].
   <tr><td><dfn export>Train Depot</dfn><td>The authority for a train and a catalogue of train offers: payload bytes and digest, declared parameters and output, the creator's licence as an ODRL offer and the creator's signing keys. [[#depot]].
@@ -297,8 +297,14 @@ applies the plan's failure policy to each outcome; and assembles the run record 
 **completeness statement** — for every intended station, its outcome in the protocol's own words,
 its cause and the station's stated reason.
 
-The Handler holds **non-personal, aggregate results only** (ADR-015). Record-level data never
-leaves the station that hosts it, except to another station under an agreement.
+The Handler holds **`Aggregate`-class state only** (ADR-015): counts, aggregates, next-hop lists and
+the names of hand-overs. `Pseudonym`-class state travels only from station to station, under an
+agreement; `RecordLevel` state never leaves the station that hosts it. The rule follows from the
+Handler's position — it is a party to no agreement, and the Data Governance Act and the EHDS give
+an intermediary that holds data a position this architecture keeps the Handler out of — and not
+from any claim that what it holds is harmless: an aggregate can be personal, which is what the
+k-anonymity duties of result inspection exist for. This document therefore describes what may
+reach the Handler by state class and never as *non-personal*.
 
 ## Individual Gateway ## {#gateway}
 
@@ -448,7 +454,7 @@ code, logs and user interfaces.
 
 Three mechanisms carry state from one visit to the next, chosen per plan and constrained by the
 stations' policies (ADR-016): **inside the train** — a container or script train carries state, and
-the origin station's PEP 3 judges what may leave with it; **via the Handler** — only non-personal
+the origin station's PEP 3 judges what may leave with it; **via the Handler** — only `Aggregate`-class
 state returns to the Handler and is re-injected as parameters; **via an identifier-translation hop** — only
 opaque pseudonyms cross an organisational boundary, translated at a station a trusted third party
 operates and handed to the next station **by location and digest, never by value**, so that the Handler holds a
@@ -546,7 +552,7 @@ the only published evidence. The artefacts are those pinned by the Visit Protoco
   <tr id="th-3"><td>TH-3<td>A station selector MUST state the data a station must hold, as a SHACL model, and a Train Handler MUST select stations by structural coverage of that requirement by the shapes each station publishes — acting on what a station publishes, never on a registry's entry alone.<td>[[#registry]], [[#plan-run-visit]]<td>Schema — `fdts:StationSelectorShape` refusing `selector-without-data-requirement.ttl`. Rule — `coverage.py check` against `tests/coverage-expectations.json`. Harness.
   <tr id="th-4"><td>TH-4<td>A Train Handler MUST dispatch query and API trains orchestrated only.<td>[[#state-between-hops]]<td>Schema — `fdts:QueryTrainCoordinationShape` refusing `plan-query-train-choreographed.ttl`.
   <tr id="th-5"><td>TH-5<td>A Train Handler MUST resolve a train at its Depot and dispatch only a train its owner holds under the creator's licence, concluded as a two-party agreement signed by the creator and by the owner; it MUST NOT dispatch a withdrawn train.<td>[[#depot]]<td>Schema — `train-offer.shapes.ttl` (`fdts:TrainOfferShape` and the withdrawal shape of ADR-036) over `train-taken.ttl`, refusing `train-taken-from-someone-who-did-not-write-it.ttl`, `train-offer-assigned-by-its-depot.ttl`, `train-withdrawn-by-nobody.ttl`; Rule — `derivation.py` refusing `depot-signed-the-creators-side.ttl`. The Depot interface itself is specified only by `train-depot-api.yaml` and `protocol/train-publication.md` until its document is published.
-  <tr id="th-6"><td>TH-6<td>A Train Handler MUST hold non-personal, aggregate results only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store record-level data.<td>[[#trainhandler]]<td>The Visit Protocol's criteria. Harness.
+  <tr id="th-6"><td>TH-6<td>A Train Handler MUST hold `Aggregate`-class state only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store `Pseudonym`- or `RecordLevel`-class state.<td>[[#trainhandler]]<td>The Visit Protocol's criteria. Harness.
   <tr id="th-7"><td>TH-7<td>A Train Handler MUST produce a completeness statement for every run that did not deliver from every intended station, naming every intended station and, for each, its outcome in the seven words verbatim, its cause and the station's stated reason.<td>[[#trainhandler]], [[#dispatch]]<td>Schema — `fdts:RunShape`, `fdts:CompletenessShape` refusing `run-partial-without-completeness.ttl`; `run-state.schema.json` over `run-state-two-phase.json`. Harness.
   <tr id="th-8"><td>TH-8<td>A Train Handler MUST record each run as PROV-O provenance: the run an activity, its visits sub-activities, the merged result a derivation from the delivered visits.<td>[[#trainhandler]], [[#standards]]<td>Harness. No shape in `fdt-commons` 0.75.0 constrains the run record beyond `fdts:RunShape`; this is a recorded gap of the conformance material.
   <tr id="th-9"><td>TH-9<td>A Train Handler MUST visit under its own credential, issued by a provider the visit's network trusts, and MUST NOT forward a consumer's credential to a station.<td>[[#networks]]<td>The Visit Protocol's criteria.

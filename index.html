@@ -1497,7 +1497,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://specs.fairdatatrain.org/" rel="canonical">
-  <meta content="282fef9754b0487689a004281be32f377b2eed27" name="revision">
+  <meta content="218ca0094df2a5a6acf634c9253a34e549417c0e" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 /* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
@@ -2290,7 +2290,7 @@ a role may be played by an organisation or, where the deployment admits it, by a
      <tr>
       <td><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="data-consumer">Data Consumer</dfn> / <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="train-owner">Train Owner</dfn>
       <td>The party accountable for a run
-      <td>The <code>assignee</code> of every agreement a run concludes; submits trains through a Train Handler and receives inspected, non-personal results.
+      <td>The <code>assignee</code> of every agreement a run concludes; submits trains through a Train Handler and receives inspected results of <code>Aggregate</code> class.
   
      <tr>
       <td><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="train-creator">Train Creator</dfn>
@@ -2338,7 +2338,7 @@ a role may be played by an organisation or, where the deployment admits it, by a
   
      <tr>
       <td><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="train-handler">Train Handler</dfn>
-      <td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the non-personal results and provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. <a href="#trainhandler">§ 3.2 Train Handler</a>.
+      <td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the <code>Aggregate</code>-class results and the provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. <a href="#trainhandler">§ 3.2 Train Handler</a>.
   
      <tr>
       <td><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="individual-gateway">Individual Gateway</dfn>
@@ -2449,8 +2449,14 @@ station’s event stream; signs the assignee’s side of each agreement with the
 applies the plan’s failure policy to each outcome; and assembles the run record and the
 <strong>completeness statement</strong> — for every intended station, its outcome in the protocol’s own words,
 its cause and the station’s stated reason.</p>
-   <p>The Handler holds <strong>non-personal, aggregate results only</strong> (ADR-015). Record-level data never
-leaves the station that hosts it, except to another station under an agreement.</p>
+   <p>The Handler holds **<code>Aggregate</code>-class state only** (ADR-015): counts, aggregates, next-hop lists and
+the names of hand-overs. <code>Pseudonym</code>-class state travels only from station to station, under an
+agreement; <code>RecordLevel</code> state never leaves the station that hosts it. The rule follows from the
+Handler’s position — it is a party to no agreement, and the Data Governance Act and the EHDS give
+an intermediary that holds data a position this architecture keeps the Handler out of — and not
+from any claim that what it holds is harmless: an aggregate can be personal, which is what the
+k-anonymity duties of result inspection exist for. This document therefore describes what may
+reach the Handler by state class and never as <em>non-personal</em>.</p>
    <h3 class="heading settled" data-level="3.3" id="gateway"><span class="secno">3.3. </span><span class="content">Individual Gateway</span><a class="self-link" href="#gateway"></a></h3>
    <p>The Individual Gateway is one controller’s agent across every station hosting data they control.
 Through it a controller authors access conditions once and publishes them to each station, reviews
@@ -2603,7 +2609,7 @@ code, logs and user interfaces.</p>
    <h3 class="heading settled" data-level="4.4" id="state-between-hops"><span class="secno">4.4. </span><span class="content">State between hops</span><a class="self-link" href="#state-between-hops"></a></h3>
    <p>Three mechanisms carry state from one visit to the next, chosen per plan and constrained by the
 stations' policies (ADR-016): <strong>inside the train</strong> — a container or script train carries state, and
-the origin station’s PEP 3 judges what may leave with it; <strong>via the Handler</strong> — only non-personal
+the origin station’s PEP 3 judges what may leave with it; <strong>via the Handler</strong> — only <code>Aggregate</code>-class
 state returns to the Handler and is re-injected as parameters; <strong>via an identifier-translation hop</strong> — only
 opaque pseudonyms cross an organisational boundary, translated at a station a trusted third party
 operates and handed to the next station <strong>by location and digest, never by value</strong>, so that the Handler holds a
@@ -2862,7 +2868,7 @@ the only published evidence. The artefacts are those pinned by the Visit Protoco
   
      <tr id="th-6">
       <td>TH-6
-      <td>A Train Handler MUST hold non-personal, aggregate results only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store record-level data.
+      <td>A Train Handler MUST hold <code>Aggregate</code>-class state only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store <code>Pseudonym</code>- or <code>RecordLevel</code>-class state.
       <td><a href="#trainhandler">§ 3.2 Train Handler</a>
       <td>The Visit Protocol’s criteria. Harness.
   

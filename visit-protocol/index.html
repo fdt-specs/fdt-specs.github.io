@@ -1497,7 +1497,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://specs.fairdatatrain.org/visit-protocol/" rel="canonical">
-  <meta content="282fef9754b0487689a004281be32f377b2eed27" name="revision">
+  <meta content="218ca0094df2a5a6acf634c9253a34e549417c0e" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 /* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
@@ -2845,7 +2845,7 @@ visit ends <strong>Rejected</strong> at the checkpoint named, with <code>visit.r
   
      <tr id="hnd-10">
       <td>HND-10
-      <td>A Handler MUST hold non-personal, aggregate results, envelopes, events and the <strong>names</strong> of hand-overs only (ADR-015). It MUST answer <code>422</code> to an envelope carrying record-level content or lacking its outcome or reason, and <code>409</code> to an uploaded artefact whose digest is not the envelope’s.
+      <td>A Handler MUST hold <code>Aggregate</code>-class results, envelopes, events and the <strong>names</strong> of hand-overs only (ADR-015); <code>Pseudonym</code>-class state travels only from station to station. It MUST answer <code>422</code> to an envelope carrying record-level content or lacking its outcome or reason, and <code>409</code> to an uploaded artefact whose digest is not the envelope’s.
       <td><a href="#inbound">§ 9.2 What arrives</a>, <a href="#reporting-result">§ 10.2 Result and artefacts</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
       <td>Harness.
   
@@ -4900,6 +4900,11 @@ resolve.</p>
    <h2 class="heading no-num settled" id="changes"><span class="content">Appendix C: Change history</span><a class="self-link" href="#changes"></a></h2>
    <p><em>This appendix is non-normative.</em></p>
    <dl>
+    <dt data-md>16 October 2026 — state classes, not "non-personal"
+    <dd data-md>
+     <p>What may reach a Handler is described by state class — <code>Aggregate</code>, <code>Pseudonym</code>, <code>RecordLevel</code>
+— and no longer as "non-personal": an aggregate can be personal and a record need not be, and
+the contracts never used the word. The rule itself (ADR-015) is unchanged.</p>
     <dt data-md>16 October 2026 — no station types
     <dd data-md>
      <p>The protocol never had a station type for identifier translation, but it spoke of "a linkage
