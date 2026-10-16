@@ -11,6 +11,17 @@ BIKESHED ?= .venv/bin/bikeshed
 BIKESHED_VERSION := 7.2.0
 PYTHON_VERSION := 3.12
 
+# The local .venv is created on demand. When BIKESHED names another executable (CI passes
+# BIKESHED=bikeshed after pip-installing it), nothing here has to be built first — an order-only
+# prerequisite on a bare command name would make make look for a file by that name and, not
+# finding one, try to create the venv with uv on a runner that has no uv.
+VENV_BIKESHED := .venv/bin/bikeshed
+ifeq ($(BIKESHED),$(VENV_BIKESHED))
+  BIKESHED_DEP := $(VENV_BIKESHED)
+else
+  BIKESHED_DEP :=
+endif
+
 SPECS := index.bs v0.1/index.bs visit-protocol/index.bs
 HTML  := $(SPECS:.bs=.html)
 BOILERPLATE := $(wildcard boilerplate/*.include)
@@ -21,23 +32,23 @@ all: $(HTML)  ## build every specification
 
 # --allow-nonlocal-files: v0.1/ refers to the shared ../images/, which Bikeshed otherwise refuses
 # to read from outside the source document's directory.
-%.html: %.bs $(BOILERPLATE) | $(BIKESHED)
+%.html: %.bs $(BOILERPLATE) | $(BIKESHED_DEP)
 	$(BIKESHED) --die-on=link-error --allow-nonlocal-files spec $< $@
 
 check: all  ## fail if any built page differs from what is committed
 	@git diff --exit-code --stat -- '*.html' && echo "built pages are up to date"
 
-venv: $(BIKESHED)  ## create the pinned build environment
+venv: $(VENV_BIKESHED)  ## create the pinned build environment
 
-$(BIKESHED):
+$(VENV_BIKESHED):
 	uv venv --python $(PYTHON_VERSION) .venv
 	uv pip install --python .venv/bin/python 'bikeshed==$(BIKESHED_VERSION)'
 	.venv/bin/bikeshed update
 
-update: | $(BIKESHED)  ## refresh Bikeshed's reference data (needs network)
+update: | $(BIKESHED_DEP)  ## refresh Bikeshed's reference data (needs network)
 	$(BIKESHED) update
 
-watch: | $(BIKESHED)  ## rebuild the protocol spec on every save
+watch: | $(BIKESHED_DEP)  ## rebuild the protocol spec on every save
 	$(BIKESHED) watch visit-protocol/index.bs visit-protocol/index.html
 
 # The examples in visit-protocol/examples/ are the published fixtures of fdt-commons, copied
