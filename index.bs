@@ -145,8 +145,9 @@ Handler for one visit of one train.
 *This section is non-normative.*
 
 A reference implementation of the ecosystem exists [[FDT-COMMONS]] and this version of the
-architecture was written against it: every component in [[#components]] except the alignment
-station has a running implementation, the interactions of [[#interactions]] are exercised end to
+architecture was written against it: every component in [[#components]] has a running
+implementation — of the two services of [[#translation-alignment]], identifier translation runs and
+vocabulary alignment does not yet — the interactions of [[#interactions]] are exercised end to
 end by its test suites and testbed, and the normative artefacts of the Visit Protocol — JSON
 Schemas, OpenAPI documents, SHACL shapes and the fixtures every component is tested against — are
 the contracts that implementation is built on. The architectural decisions behind the text are
@@ -167,9 +168,9 @@ to date with what has since been built, and the following names and ideas change
   <tr><td>*Station Directory*, "a special kind of Data Station"<td>**FDT Registry**<td>The registry is an index over what stations and depots publish and is not a trust anchor: nothing may be granted on the strength of an entry, and it is not a station.
   <tr><td>*Train Provider*<td>**Train Creator**<td>The role is the party that created a train and is answerable for it. The ontology keeps `fdt-o:TrainProvider` as the IRI with "Train Creator" as its label, because a published IRI is a promise.
   <tr><td>—<td>**Train Depot**<td>Trains are contracted assets with an identity, a creator's offer and a verifiable payload. The Depot is the authority for a train; a station resolves a train there before running it.
-  <tr><td>—<td>**Linkage Station**, **Alignment Station**<td>Two station types for the two cross-organisational services a multi-station analysis needs: identifier translation between pseudonym spaces, and vocabulary alignment.
+  <tr><td>A Data Station hosts data<td>A Data Station hosts **any digital object**<td>"Data" is meant as the FAIR principles mean it. Identifier translation between pseudonym spaces and vocabulary alignment are services a station hosts and a train visits like any other, under the same protocol and their own agreements ([[#translation-alignment]]). An earlier draft of this version made them two station types and withdrew them: they added components without adding an interface.
   <tr><td>—<td>**Visit Protocol** [[FDT-VISIT-PROTOCOL]]<td>The Content Interaction Interface of version 0.1 was a heading. It is now a specification: how a train is dispatched, how an agreement is negotiated and signed by both parties on arrival, how every decision is reported, and how a result leaves.
-  <tr><td>—<td>**Conformance criteria**<td>Version 0.1 named no requirement an implementation could be checked against. [[#conformance]] now defines conforming Data Stations, Train Handlers and Linkage Stations by numbered criteria, each tied to the shape, checker or harness that decides it.
+  <tr><td>—<td>**Conformance criteria**<td>Version 0.1 named no requirement an implementation could be checked against. [[#conformance]] now defines conforming Data Stations and Train Handlers by numbered criteria, each tied to the shape, checker or harness that decides it.
   <tr><td>Agreement signed by the station<td>Agreement signed by **both parties**<td>A record kept by one party and signed by that party alone proves nothing to a third party. Each party signs the same canonical form.
 </table>
 
@@ -190,27 +191,25 @@ a role may be played by an organisation or, where the deployment admits it, by a
   <tr><td><dfn export>Train Creator</dfn><td>The party that created a train and publishes it<td>Offers the train as a contracted asset through a Train Depot, under their own licence; signs what they publish. When a creator sends their own train, they also play the Train Owner role.
   <tr><td>Train Handler operator<td>Runs dispatch and orchestration infrastructure<td>Not a party to any agreement; may hold aggregate results only (ADR-015).
   <tr><td>Registry operator, Train Depot operator<td>Run a registry or a depot<td>A registry harvests and indexes; it is never a trust anchor. A depot is the authority for the trains it holds — bytes, digests, declared parameters and output, the creator's offer and keys.
-  <tr><td>Linkage service provider, Alignment service provider<td>Operate linkage or alignment stations<td>Trusted third parties for identifier translation; vocabulary and mapping services.
+  <tr><td>Trusted third party<td>Operates a station hosting an identifier-translation service<td>A Station Owner whose station translates pseudonyms between organisational spaces — the only party that ever holds both sides of a join. An alignment service has an operator in the same sense, with nothing sensitive in their keeping.
   <tr><td><dfn export>Network governance authority</dfn><td>One per FDT network<td>Participation rules, evidence categories, trusted identity issuers and trust anchors for the network (ADR-017).
 </table>
 
 # Components # {#components}
 
 <figure id="fig-ecosystem">
-  <img src="images/fdt-ecosystem-components.svg" width="1641" height="785" alt="The components of an FDT ecosystem in four groups. Consumer side: the Train Handler and the Train Creator's publications. Controller side: the Individual Gateway. Federation services: the FDT Registry, the Train Depot and the governance function. Data Stations, which may belong to several networks: the Data Station, the Linkage Station and the Alignment Station. Underneath all of them, fdt-commons: the shared contracts every component validates against. Solid lines are version 1 interactions; dotted lines are version 2 or governance.">
+  <img src="images/fdt-ecosystem-components.svg" width="1641" height="785" alt="The components of an FDT ecosystem in four groups. Consumer side: the Train Handler and the Train Creator's publications. Controller side: the Individual Gateway. Federation services: the FDT Registry, the Train Depot and the governance function. Data Stations, which may belong to several networks and host any digital object — datasets, identifier-translation and alignment services alike. Underneath all of them, fdt-commons: the shared contracts every component validates against. Solid lines are version 1 interactions; dotted lines are version 2 or governance.">
   <figcaption>The components of an FDT ecosystem, and the shared contracts under them</figcaption>
 </figure>
 
 <table class="data">
   <thead><tr><th>Component<th>Responsibility
   <tbody>
-  <tr><td><dfn export>Data Station</dfn><td>Hosts data; publishes FAIR metadata about itself and its content; receives trains; negotiates an agreement per visit on arrival; enforces policy at three checkpoints; executes the train through an interaction-mechanism adapter; returns the inspected result, or lets inspected state travel onward. [[#datastation]].
+  <tr><td><dfn export>Data Station</dfn><td>Hosts digital objects of any kind — datasets, and services such as identifier translation or vocabulary alignment; publishes FAIR metadata about itself and what it hosts; receives trains; negotiates an agreement per visit on arrival; enforces policy at three checkpoints; executes the train through an interaction-mechanism adapter; returns the inspected result, or lets inspected state travel onward. [[#datastation]].
   <tr><td><dfn export>Train Handler</dfn><td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the non-personal results and provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. [[#trainhandler]].
   <tr><td><dfn export>Individual Gateway</dfn><td>The controller-side agent for one controller across every station hosting their data: author and revoke access conditions, review the agreements concluded over their data and the audit slice that touched it, receive and decide approval requests, exercise opt-out. [[#gateway]].
   <tr><td><dfn export>FDT Registry</dfn><td>A metadata registry: harvests and indexes what stations and depots publish, and answers which stations hold the data a train needs. An index and never a trust anchor. [[#registry]].
   <tr><td><dfn export>Train Depot</dfn><td>The authority for a train and a catalogue of train offers: payload bytes and digest, declared parameters and output, the creator's licence as an ODRL offer and the creator's signing keys. [[#depot]].
-  <tr><td><dfn export>Linkage Station</dfn><td>A station whose interaction mechanism is identifier translation between organisational pseudonym spaces; visited as a hop under its own agreement; wraps an existing trusted third party. [[#linkage]].
-  <tr><td><dfn export>Alignment Station</dfn><td>A station or service offering vocabulary and mapping alignment — code systems, administrative units — consulted by trains or visited as a hop. [[#linkage]].
   <tr><td>Governance function<td>Per network: onboarding, evidence, trusted issuers and trust anchors, rule publication; exposes machine-readable membership so stations and handlers can check who belongs to which network. [[#networks]].
   <tr><td><dfn export>fdt-commons</dfn><td>The shared contracts: the FDT ontology and profiles, SHACL shapes, JSON-LD contexts, JSON Schemas and OpenAPI documents, state machines and their mapping to the Dataspace Protocol, and the fixtures every component is tested against. [[#contracts]].
 </table>
@@ -230,6 +229,12 @@ interface. The interface is divided into three groups, as depicted in <a href="#
 Interface</dfn>. Each group exposes the interfaces of a number of services the station provides,
 and the interaction with the data happens only through the station's interaction component, which
 is the one component that connects to the data storage.
+
+A station hosts **digital objects of any kind** — "data" in the sense the FAIR principles give the
+word. Hosted datasets and their parts are the common case; a service that translates identifiers
+between pseudonym spaces or aligns vocabularies is hosted the same way, described in the same
+catalogue with the interaction mechanism it is reached by, and visited by a train under the same
+protocol and its own agreement ([[#translation-alignment]]).
 
 <figure id="fig-fds">
   <img src="images/fds_simplified_view.png" alt="The FDS API exposes a Metadata Interface, a Station Interface and a Content Interaction Interface, each realised by a service and a component; only the Interaction Component connects to the Data Storage." width="80%">
@@ -325,15 +330,30 @@ it was handed is the one the Depot describes. Taking a train from a Depot is its
 agreement — the creator's licence, signed by the creator's Gateway and by the would-be owner — and
 a Depot signs nothing in anybody's name.
 
-## Linkage and Alignment Stations ## {#linkage}
+## Identifier translation and vocabulary alignment ## {#translation-alignment}
 
-Both are ordinary stations, visited with the same protocol under their own agreements. A Linkage
-Station's mechanism is identifier translation: it receives a list of pseudonyms in one
-organisation's space and returns the corresponding list in another's — **one side only, never the
-pair**, and in an order that discloses no correspondence — so that two stations can be joined at
-the level of the individual by nobody but the trusted third party. An Alignment Station offers
-vocabulary and mapping services — code systems, spatial and administrative units — that a train
-consults or visits as a hop.
+A multi-station analysis across organisational boundaries needs two services that no single
+data-holding station provides: translating identifiers between pseudonym spaces, and aligning
+vocabularies. Both are **hosted by Data Stations like any other digital object** and reached by
+the same protocol under their own agreements; neither is a component of the architecture.
+
+**Identifier translation.** A station whose interaction mechanism is identifier translation
+(`fdt-inst:IdentifierTranslation`) receives a list of pseudonyms in one organisation's space and
+returns the corresponding list in another's — **one side only, never the pair**, and in an order
+that discloses no correspondence — so that two stations can be joined at the level of the
+individual by nobody but the trusted third party that operates it. The station declares the
+pseudonym spaces and join keys it serves in its catalogue, and an existing trusted third party is
+wrapped as such a station.
+
+**Vocabulary alignment.** A station hosting mappings between code systems, units, spatial and
+administrative divisions, which a train consults or visits as a hop; stations declare per dataset
+the vocabularies they use, so a Handler can check at planning time that two stations' data can be
+put together.
+
+The FDT ontology carries `fdt-o:LinkageStation` and `fdt-o:AlignmentStation` as subclasses of
+`fdt-o:DataStation`: labels a station may add to its self-description so that a registry finds it
+by what it hosts. They introduce no interface and no requirement that the mechanism declaration
+does not already carry.
 
 ## Networks and governance ## {#networks}
 
@@ -373,7 +393,7 @@ the Visit Protocol is the only interface a station needs.
 
 ## Agreements, per visit, signed by both parties ## {#agreements}
 
-Every visit — including a visit to a linkage or alignment station — is governed by its own ODRL
+Every visit — including a visit for identifier translation or vocabulary alignment — is governed by its own ODRL
 agreement, negotiated on arrival (ADR-014). The station matches the train's request against the
 controller's offer for the visit's network and the owner's policy and **derives** the agreement:
 it grants exactly the actions requested that the offer permits, carries every usage constraint
@@ -429,9 +449,9 @@ code, logs and user interfaces.
 Three mechanisms carry state from one visit to the next, chosen per plan and constrained by the
 stations' policies (ADR-016): **inside the train** — a container or script train carries state, and
 the origin station's PEP 3 judges what may leave with it; **via the Handler** — only non-personal
-state returns to the Handler and is re-injected as parameters; **via a linkage station** — only
-opaque pseudonyms cross an organisational boundary, translated by the trusted third party and
-handed to the next station **by location and digest, never by value**, so that the Handler holds a
+state returns to the Handler and is re-injected as parameters; **via an identifier-translation hop** — only
+opaque pseudonyms cross an organisational boundary, translated at a station a trusted third party
+operates and handed to the next station **by location and digest, never by value**, so that the Handler holds a
 name and the bytes stay at the station that produced them.
 
 # Standards # {#standards}
@@ -473,16 +493,13 @@ apart so that a conformance claim can cite both without ambiguity.
 
 : <dfn export>Conforming Data Station</dfn>
 :: A component that conforms to the Visit Protocol as a push-dispatch station or as a
-    poll-dispatch station, and meets every criterion of [[#criteria-ds]].
+    poll-dispatch station, and meets every criterion of [[#criteria-ds]] — the last four of them
+    where it hosts an identifier-translation or alignment service.
 : <dfn export>Conforming Train Handler</dfn>
 :: A component that conforms to the Visit Protocol as a Train Handler, and meets every criterion
     of [[#criteria-th]].
-: <dfn export>Conforming Linkage Station</dfn>
-:: A conforming Data Station whose interaction mechanism is identifier translation, and which
-    meets every criterion of [[#criteria-ls]].
 
-Conformance for the Individual Gateway, the FDT Registry, the Train Depot and the Alignment
-Station will be specified in their own documents as those are published; their interfaces exist
+Conformance for the Individual Gateway, the FDT Registry and the Train Depot will be specified in their own documents as those are published; their interfaces exist
 today only as OpenAPI documents and fixtures in `fdt-commons` [[FDT-COMMONS]], and a claim about
 them is a claim against those artefacts.
 
@@ -513,6 +530,10 @@ the only published evidence. The artefacts are those pinned by the Visit Protoco
   <tr id="ds-10"><td>DS-10<td>A Data Station MUST enforce policy at the three checkpoints and MUST emit every decision it takes as an event with a justification; it MUST NOT change the state of a visit silently.<td>[[#contentinteractioninterface]], [[#dispatch]]<td>The Visit Protocol's criteria.
   <tr id="ds-11"><td>DS-11<td>Record-level data MUST NOT leave a Data Station except to another station, under an agreement, by location and digest; it MUST NOT appear in a result, an artefact, an event or a justification.<td>[[#trainhandler]], [[#state-between-hops]]<td>Schema — `fdts:VisitShape` refusing `visit-record-level-onward.ttl`. Rule — `inspection.py check` refusing `record-level-onward.json`.
   <tr id="ds-12"><td>DS-12<td>A Data Station MUST report every visit's outcome in one of the seven words of [[#dispatch]], exactly, in its events, envelopes, logs and user interfaces.<td>[[#dispatch]]<td>The Visit Protocol's criteria.
+  <tr id="ds-13"><td>DS-13<td>A Data Station that hosts an identifier-translation service MUST declare it in its self-description as a `dcat:DataService` of the mechanism `fdt-inst:IdentifierTranslation`, and MUST publish a catalogue like any other station.<td>[[#translation-alignment]]<td>Schema — `fdts:LinkageStationServiceShape` (`station-catalog.shapes.ttl`), which selects a station by the label `fdt-o:LinkageStation` the ontology keeps for this capability, refusing `linkage-station-that-publishes-no-catalogue.ttl`, `linkage-station-that-publishes-no-translation-service.ttl`.
+  <tr id="ds-14"><td>DS-14<td>A translation or alignment service MUST be visited as a hop under its own agreement, through the Visit Protocol.<td>[[#translation-alignment]], [[#agreements]]<td>Schema — `visit-result-ttg-hop2.json` (the translation visit), `visit-descriptor-ttg-hop3.json` (the hop that receives its hand-over). Harness.
+  <tr id="ds-15"><td>DS-15<td>A translation MUST return the identifiers of one pseudonym space only and never the pair, in an order that discloses no correspondence with the order asked, and the count it reports MUST be the count it released.<td>[[#translation-alignment]]<td>Schema — `translation-envelope.schema.json` over `translation-result-ttg-hop2.json`. Rule — `inspection.py check` refusing `translation-that-returns-the-space-it-was-given.json`, `translation-in-the-order-it-was-asked.json`, `translation-whose-count-is-not-what-it-released.json`.
+  <tr id="ds-16"><td>DS-16<td>A Data Station MUST hand translated state to the next station by location and digest and never by value.<td>[[#state-between-hops]]<td>The Visit Protocol's criteria (`onward.handedOverDigest`, the inbound rules).
 </table>
 
 ## Criteria for a Train Handler ## {#criteria-th}
@@ -529,17 +550,6 @@ the only published evidence. The artefacts are those pinned by the Visit Protoco
   <tr id="th-7"><td>TH-7<td>A Train Handler MUST produce a completeness statement for every run that did not deliver from every intended station, naming every intended station and, for each, its outcome in the seven words verbatim, its cause and the station's stated reason.<td>[[#trainhandler]], [[#dispatch]]<td>Schema — `fdts:RunShape`, `fdts:CompletenessShape` refusing `run-partial-without-completeness.ttl`; `run-state.schema.json` over `run-state-two-phase.json`. Harness.
   <tr id="th-8"><td>TH-8<td>A Train Handler MUST record each run as PROV-O provenance: the run an activity, its visits sub-activities, the merged result a derivation from the delivered visits.<td>[[#trainhandler]], [[#standards]]<td>Harness. No shape in `fdt-commons` 0.75.0 constrains the run record beyond `fdts:RunShape`; this is a recorded gap of the conformance material.
   <tr id="th-9"><td>TH-9<td>A Train Handler MUST visit under its own credential, issued by a provider the visit's network trusts, and MUST NOT forward a consumer's credential to a station.<td>[[#networks]]<td>The Visit Protocol's criteria.
-</table>
-
-## Criteria for a Linkage Station ## {#criteria-ls}
-
-<table class="data criteria">
-  <thead><tr><th>Id<th>Requirement<th>Stated in<th>Checked by
-  <tbody>
-  <tr id="ls-1"><td>LS-1<td>A Linkage Station MUST be typed `fdt-o:LinkageStation` in addition to `fdt-o:DataStation`, MUST publish a catalogue, and MUST publish a `dcat:DataService` declaring the identifier-translation mechanism.<td>[[#linkage]]<td>Schema — `fdts:LinkageStationServiceShape` refusing `linkage-station-that-publishes-no-catalogue.ttl`, `linkage-station-that-publishes-no-translation-service.ttl`.
-  <tr id="ls-2"><td>LS-2<td>A Linkage Station MUST be visited as a hop under its own agreement, through the Visit Protocol.<td>[[#linkage]], [[#agreements]]<td>Schema — `visit-descriptor-ttg-hop3.json`, `visit-result-ttg-hop2.json`. Harness.
-  <tr id="ls-3"><td>LS-3<td>A translation MUST return the identifiers of one pseudonym space only and never the pair, in an order that discloses no correspondence with the order asked, and the count it reports MUST be the count it released.<td>[[#linkage]]<td>Schema — `translation-envelope.schema.json` over `translation-result-ttg-hop2.json`. Rule — `inspection.py check` refusing `translation-that-returns-the-space-it-was-given.json`, `translation-in-the-order-it-was-asked.json`, `translation-whose-count-is-not-what-it-released.json`.
-  <tr id="ls-4"><td>LS-4<td>A Linkage Station MUST hand translated state to the next station by location and digest and never by value.<td>[[#state-between-hops]]<td>The Visit Protocol's criteria (`onward.handedOverDigest`, the inbound rules).
 </table>
 
 ## Conformance statement ## {#conformance-statement}

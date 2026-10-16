@@ -1497,7 +1497,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://specs.fairdatatrain.org/visit-protocol/" rel="canonical">
-  <meta content="38924aeb5e5f563766759c765da7ea6c12f47a4b" name="revision">
+  <meta content="282fef9754b0487689a004281be32f377b2eed27" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 /* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
@@ -2674,7 +2674,7 @@ visit ends <strong>Rejected</strong> at the checkpoint named, with <code>visit.r
   
      <tr id="sta-32">
       <td>STA-32
-      <td>Handing state onward, a station MUST record the hand-over digest as <code>onward.handedOverDigest</code> and MUST hand <code>Pseudonym</code>-class state to a linkage station only.
+      <td>Handing state onward, a station MUST record the hand-over digest as <code>onward.handedOverDigest</code> and MUST hand <code>Pseudonym</code>-class state only to the station named in <code>linkageStation</code>, which performs the identifier translation.
       <td><a href="#outbound">§ 9.1 What leaves</a>
       <td>Schema — <code>visit-result.schema.json</code> (<code>onward</code>), <code>visit-result-ttg-hop1.json</code>. Harness.
   
@@ -3017,7 +3017,7 @@ depends on keeping them apart.</p>
     <dd data-md>
      <p>What leaves a station other than the result delivered to the Handler: state of class
 <code>Aggregate</code> or <code>Pseudonym</code> carried to another station, directly in a choreographed train or
-through a linkage station. <code>RecordLevel</code> never leaves a station.</p>
+through an identifier-translation hop. <code>RecordLevel</code> never leaves a station.</p>
     <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="hand-over">hand-over</dfn>
     <dd data-md>
      <p>State produced by an earlier visit of the same run and named, by location and digest, as the
@@ -3057,8 +3057,8 @@ pins is <code>"sha256:"</code> followed by the lowercase hex SHA-256 of a canoni
       <td><code>train.iri</code>; its payload by <code>sha256:</code> digest.
   
      <tr>
-      <td>Linkage / alignment station
-      <td>An ordinary station whose mechanism is identifier translation or vocabulary alignment; visited with this protocol.
+      <td>Station hosting a translation or alignment service
+      <td>An ordinary station whose mechanism is identifier translation or vocabulary alignment; visited with this protocol under its own agreement.
       <td>As any station.
 
    </table>
@@ -3363,9 +3363,9 @@ not a count beyond what the justification states). The station emits <code>visit
    <h3 class="heading settled" data-level="9.1" id="outbound"><span class="secno">9.1. </span><span class="content">What leaves</span><a class="self-link" href="#outbound"></a></h3>
    <p>The descriptor’s <code>onward</code> block is the plan’s request; PEP 3 applies the controller’s offer, which
 may be stricter. The destination is <strong>handler</strong> (the default: the envelope’s <code>result</code> and
-<code>artifacts</code>), <strong>linkage</strong> (<code>Pseudonym</code>-class state is handed to the named linkage station under the
-named join key; the envelope records the hand-over digest and the linkage station verifies it on
-its own visit) or <strong>train</strong> (a choreographed script or container train carries state and a routing
+<code>artifacts</code>), <strong>linkage</strong> (<code>Pseudonym</code>-class state is handed to the station named in <code>linkageStation</code> — the
+one that performs the identifier translation — under the named join key; the envelope records the
+hand-over digest and that station verifies it on its own visit) or <strong>train</strong> (a choreographed script or container train carries state and a routing
 instruction; in version 1 the train returns to the Handler between hops, so the envelope’s
 <code>routing.nextStations</code> is what the Handler dispatches next, inspected at PEP 3 like any other
 output). Query and API trains MUST NOT use destination <code>train</code>.</p>
@@ -4900,6 +4900,12 @@ resolve.</p>
    <h2 class="heading no-num settled" id="changes"><span class="content">Appendix C: Change history</span><a class="self-link" href="#changes"></a></h2>
    <p><em>This appendix is non-normative.</em></p>
    <dl>
+    <dt data-md>16 October 2026 — no station types
+    <dd data-md>
+     <p>The protocol never had a station type for identifier translation, but it spoke of "a linkage
+station" as though it did. It now says what it meant: an ordinary station hosting a translation
+service, named in the descriptor’s <code>linkageStation</code> (<a href="#outbound">§ 9.1 What leaves</a>). The member names <code>linkage</code>
+and <code>linkageStation</code> are contract names and are unchanged.</p>
     <dt data-md>16 October 2026 — conformance criteria
     <dd data-md>
      <p><a href="#conformance">§ 2 Conformance</a> gains the numbered criteria of <a href="#criteria">§ 2.3 Criteria</a> — STA for every station, PUSH

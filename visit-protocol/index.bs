@@ -219,7 +219,7 @@ visit ends **Rejected** at the checkpoint named, with `visit.rejected` carrying 
   <tr id="sta-29"><td>STA-29<td>On withdrawal a queued or pending visit MUST end at once with `negotiation.withdrawn`, a running visit MUST stop at its next checkpoint with `visit.cancelled`, either ending **TimedOut**; a visit already terminal MUST be unaffected.<td>[[#outcomes-cancel]]<td>Harness.
   <tr id="sta-30"><td>STA-30<td>When the controller takes the agreement out of force, a queued or running visit MUST stop at its next checkpoint with `visit.revoked`, naming the agreement and carrying the controller's reason verbatim. A visit that arrives afterwards presenting a revoked agreement MUST be **Refused** at PEP 2, not Revoked.<td>[[#outcomes-revocation]]<td>Schema — `visit-events-gd-m1-revoked.json`; refusing `visit-event-revocation-that-names-no-agreement.json`, `visit-event-revocation-reported-as-refused.json`. Harness for the arriving case.
   <tr id="sta-31"><td>STA-31<td>Receiving a hand-over, a station MUST check at PEP 1 that `handOver.fromVisit` appears in the descriptor's `precededBy` **before fetching anything**, MUST require in the request a permission for `fdt-p:acceptHandOver` constrained by `fdt-p:inboundStateClass`, MUST fetch `url` over `https` only, and MUST hash what it got and compare it to `digest`.<td>[[#inbound]]<td>Schema — `visit-descriptor.schema.json` (a hand-over requires a lineage and the permission; `url` is `https` only) over `visit-descriptor-ttg-hop3.json`; `fdts:RequestShape` refusing `request-accepting-a-hand-over-without-an-inbound-class.ttl`. Harness for the membership itself, which no schema can decide, and for the digest.
-  <tr id="sta-32"><td>STA-32<td>Handing state onward, a station MUST record the hand-over digest as `onward.handedOverDigest` and MUST hand `Pseudonym`-class state to a linkage station only.<td>[[#outbound]]<td>Schema — `visit-result.schema.json` (`onward`), `visit-result-ttg-hop1.json`. Harness.
+  <tr id="sta-32"><td>STA-32<td>Handing state onward, a station MUST record the hand-over digest as `onward.handedOverDigest` and MUST hand `Pseudonym`-class state only to the station named in `linkageStation`, which performs the identifier translation.<td>[[#outbound]]<td>Schema — `visit-result.schema.json` (`onward`), `visit-result-ttg-hop1.json`. Harness.
   <tr id="sta-33"><td>STA-33<td>All traffic a station opens or accepts under this protocol MUST be over TLS.<td>[[#security-transport]]<td>Harness.
 </table>
 
@@ -345,7 +345,7 @@ this specification does not pretend otherwise.
 : <dfn export>onward state</dfn>
 :: What leaves a station other than the result delivered to the Handler: state of class
     `Aggregate` or `Pseudonym` carried to another station, directly in a choreographed train or
-    through a linkage station. `RecordLevel` never leaves a station.
+    through an identifier-translation hop. `RecordLevel` never leaves a station.
 : <dfn export>hand-over</dfn>
 :: State produced by an earlier visit of the same run and named, by location and digest, as the
     input of a later one.
@@ -365,7 +365,7 @@ this specification does not pretend otherwise.
   <tr><td>Train Handler<td>Client of the Station API; server of the Handler API. Mints the visit IRI, embeds the request, signs the assignee's side, applies the failure policy.<td>Its IRI (`consumer.handler`); its own credential at the station ([[#security]]); the consumer's legal party as `consumer.party`.
   <tr><td>Data Station<td>Server of the Station API; client of the Handler API. Checks the arrival, negotiates, signs the assigner's side, enforces the checkpoints, emits events, returns the envelope.<td>Its IRI (self-description); the identity providers it trusts per network.
   <tr><td>Train<td>The subject of the visit: an executable asset in a Train Depot's catalogue, with its creator's offer and its payload digest (ADR-020).<td>`train.iri`; its payload by `sha256:` digest.
-  <tr><td>Linkage / alignment station<td>An ordinary station whose mechanism is identifier translation or vocabulary alignment; visited with this protocol.<td>As any station.
+  <tr><td>Station hosting a translation or alignment service<td>An ordinary station whose mechanism is identifier translation or vocabulary alignment; visited with this protocol under its own agreement.<td>As any station.
 </table>
 
 Identifiers are IRIs. **The visit IRI is the idempotency key of the whole exchange**: a repeated
@@ -658,9 +658,9 @@ not a count beyond what the justification states). The station emits `visit.insp
 
 The descriptor's `onward` block is the plan's request; PEP 3 applies the controller's offer, which
 may be stricter. The destination is **handler** (the default: the envelope's `result` and
-`artifacts`), **linkage** (`Pseudonym`-class state is handed to the named linkage station under the
-named join key; the envelope records the hand-over digest and the linkage station verifies it on
-its own visit) or **train** (a choreographed script or container train carries state and a routing
+`artifacts`), **linkage** (`Pseudonym`-class state is handed to the station named in `linkageStation` — the
+one that performs the identifier translation — under the named join key; the envelope records the
+hand-over digest and that station verifies it on its own visit) or **train** (a choreographed script or container train carries state and a routing
 instruction; in version 1 the train returns to the Handler between hops, so the envelope's
 `routing.nextStations` is what the Handler dispatches next, inspected at PEP 3 like any other
 output). Query and API trains MUST NOT use destination `train`.
@@ -1177,6 +1177,11 @@ resolve.
 
 *This appendix is non-normative.*
 
+: 16 October 2026 — no station types
+:: The protocol never had a station type for identifier translation, but it spoke of "a linkage
+    station" as though it did. It now says what it meant: an ordinary station hosting a translation
+    service, named in the descriptor's `linkageStation` ([[#outbound]]). The member names `linkage`
+    and `linkageStation` are contract names and are unchanged.
 : 16 October 2026 — conformance criteria
 :: [[#conformance]] gains the numbered criteria of [[#criteria]] — STA for every station, PUSH
     and POLL for the two dispatch classes, HND for the Handler — each naming the section that
