@@ -2,11 +2,15 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: FAIR Data Train
+title: FAIR Data Train specifications
 message: >-
   If you use this specification, please cite it using the
   metadata from this file.
 type: software
+version: 0.2.0
+date-released: '2026-10-16'
+url: 'https://specs.fairdatatrain.org'
+repository-code: 'https://github.com/fdt-specs/fdt-specs.github.io'
 authors:
   - given-names: Luiz Olavo
     family-names: Bonino da Silva Santos

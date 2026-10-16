@@ -1,0 +1,170 @@
+[
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0001-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 1,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:04Z",
+    "type": "visit.received",
+    "state": "Checking",
+    "checkpoint": "PEP1",
+    "message": "Descriptor valid; payload digest matches the Depot offer for gene-disease 1.3; mechanism SPARQL supported and enabled",
+    "requester": {
+      "form": "organisation-credential",
+      "party": "https://example.org/fdt/party/eu-cardionet-like",
+      "agent": "m.devries@cardionet.example",
+      "issuer": "https://idp.example.org/ls-aai-like",
+      "assurance": "presented-and-verified",
+      "exchange": {
+        "issuer": "https://idp.example.org/ls-aai-like",
+        "subject": "https://example.org/fdt/party/eu-cardionet-like",
+        "actor": "m.devries@cardionet.example"
+      }
+    },
+    "justification": {
+      "decision": "permit",
+      "rule": "PEP1: PayloadShape + digest == fdt-o:artifactDigest",
+      "evidence": {
+        "digest": "sha256:0f2ea318c57bde07b025561f2333bbf0b0cb7ce75ed867ca72020ff60a7890b9"
+      }
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0002-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 2,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:05Z",
+    "type": "negotiation.requested",
+    "state": "Checking",
+    "checkpoint": "NEG",
+    "message": "Matching request gd-2026 against 1 offer in network health-research-nl"
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0003-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 3,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:10Z",
+    "type": "negotiation.matched",
+    "state": "Checking",
+    "checkpoint": "NEG",
+    "message": "Offer ut-gene-disease-research matches: research purpose, network health-research-nl, aggregate delivery",
+    "justification": {
+      "decision": "permit",
+      "rule": "NEG: every constraint of the matched permissions is satisfied by a fact the visit carries",
+      "evidence": {
+        "offer": "https://example.org/fdt/offer/ut-gene-disease-research",
+        "purpose": "https://w3id.org/dpv#ResearchAndDevelopment",
+        "network": "https://example.org/fdt/net/health-research-nl",
+        "requiresManualApproval": false
+      }
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0004-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 4,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:14Z",
+    "type": "negotiation.active",
+    "state": "Checking",
+    "checkpoint": "NEG",
+    "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+    "message": "Signed by both parties; the agreement is active. This station is poll-dispatched, so it obtained the assignee's signature itself in one round trip (POST /visits/{visitId}/agreement) rather than waiting to be reached",
+    "justification": {
+      "decision": "permit-with-duties",
+      "rule": "NEG: both parties have signed (agreement-derivation.md §6)",
+      "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+      "duties": [
+        "aggregate: at least 5 subjects per released cell"
+      ],
+      "evidence": {
+        "signatureRoute": "station-initiated",
+        "dispatchMode": "poll",
+        "agreementDigest": "sha256:a693463c971c9531ba74a8ba2f33efc64df38ee8da47397e2a07e304e706009f"
+      }
+    },
+    "dsp": {
+      "negotiationState": "FINALIZED"
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0005-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 5,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:12Z",
+    "type": "visit.queued",
+    "state": "Queued",
+    "checkpoint": "PEP2",
+    "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+    "message": "Agreement active and covers runQuery on the target; within quota"
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0006-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 6,
+    "attempt": 1,
+    "time": "2026-09-12T09:03:15Z",
+    "type": "visit.running",
+    "state": "Running",
+    "checkpoint": "EXEC",
+    "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+    "message": "SPARQL adapter executing the train payload against the station graph"
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0007-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 7,
+    "attempt": 1,
+    "time": "2026-09-12T09:04:20Z",
+    "type": "visit.inspecting",
+    "state": "Inspecting",
+    "checkpoint": "PEP3",
+    "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+    "message": "Inspecting 5 cells against the train's declared output schema and the agreement's aggregation duty (k=5)"
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0008-m1v4",
+    "visit": "https://example.org/fdt/visit/m1-v4",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 8,
+    "attempt": 1,
+    "time": "2026-09-12T09:04:22Z",
+    "type": "visit.delivered",
+    "state": "Delivered",
+    "checkpoint": "PEP3",
+    "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+    "message": "Aggregate delivered to the Handler; 5 cells; no record-level field present",
+    "justification": {
+      "decision": "permit-with-duties",
+      "rule": "PEP3: every cell counts at least 5 subjects; result validates against the train's declared output schema",
+      "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+      "evidence": {
+        "cells": 5,
+        "min_subject_count": 14,
+        "outputSchema": "https://example.org/fdt/schemas/gene-disease-output"
+      }
+    },
+    "resultUrl": "https://station.ut.example/fdt/v1/visits/m1-v4/result",
+    "dsp": {
+      "transferState": "COMPLETED"
+    }
+  }
+]

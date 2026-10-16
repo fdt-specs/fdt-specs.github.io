@@ -1,0 +1,167 @@
+[
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0001-m1v6",
+    "visit": "https://example.org/fdt/visit/m1-v6",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 1,
+    "attempt": 1,
+    "time": "2026-09-18T06:31:27Z",
+    "type": "visit.received",
+    "state": "Checking",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "requester": {
+      "form": "person-credential",
+      "party": "https://example.org/fdt/party/eu-cardionet-like",
+      "agent": "m.devries@cardionet.example",
+      "affiliation": "https://example.org/fdt/party/eu-cardionet-like",
+      "issuer": "https://idp.example.org/ls-aai-like",
+      "affiliationClaim": "affiliation",
+      "assurance": "presented-only",
+      "assuranceNote": "this station verifies no RFC 8693 exchanged token (nothing in this ecosystem performs the exchange yet), so the acting person named above stands on the Handler's assertion and was not verified here (ADR-044 \u00a75: recorded, not broken)"
+    },
+    "checkpoint": "PEP1",
+    "message": "Descriptor valid; token verified against the network's trusted issuers; payload digest matches the Depot offer; mechanism supported and enabled; request conforms to RequestShape",
+    "justification": {
+      "decision": "permit",
+      "rule": "PEP1: PayloadShape + digest == fdt-o:artifactDigest",
+      "evidence": {
+        "digest": "sha256:0f2ea318c57bde07b025561f2333bbf0b0cb7ce75ed867ca72020ff60a7890b9",
+        "mechanism": "https://w3id.org/fdt/instances#SPARQL",
+        "negotiation": "request",
+        "request": {
+          "shape": "fdts:RequestShape (fdt-commons/shapes/policy.shapes.ttl)",
+          "triples": 20,
+          "rulesExamined": "2 of 2"
+        },
+        "agent": "m.devries@cardionet.example",
+        "issuer": "https://idp.example.org/ls-aai-like",
+        "network": "https://example.org/fdt/net/health-research-nl",
+        "verification": "signature verified against the issuer's JWKS"
+      }
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0002-m1v6",
+    "visit": "https://example.org/fdt/visit/m1-v6",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 2,
+    "attempt": 1,
+    "time": "2026-09-18T06:31:27Z",
+    "type": "negotiation.requested",
+    "state": "Checking",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "checkpoint": "NEG",
+    "message": "Matching the request against the offers for network https://example.org/fdt/net/health-research-nl",
+    "dsp": {
+      "negotiationState": "REQUESTED"
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0003-m1v6",
+    "visit": "https://example.org/fdt/visit/m1-v6",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 3,
+    "attempt": 1,
+    "time": "2026-09-18T06:31:27Z",
+    "type": "negotiation.matched",
+    "state": "Checking",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "checkpoint": "NEG",
+    "message": "Offer matched",
+    "justification": {
+      "decision": "permit-with-duties",
+      "rule": "NEG: derived per protocol/agreement-derivation.md; a person concludes it",
+      "evidence": {
+        "offer": "https://example.org/fdt/offer/ut-gene-disease-research",
+        "request": "https://example.org/fdt/request/gd-2026",
+        "granted": [
+          "deliverResult",
+          "runQuery"
+        ],
+        "regime": {
+          "network": "https://example.org/fdt/net/health-research-nl",
+          "permitsAutomatedDecision": true,
+          "source": "configured",
+          "establishedByTheNetwork": false
+        }
+      }
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0004-m1v6",
+    "visit": "https://example.org/fdt/visit/m1-v6",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 4,
+    "attempt": 1,
+    "time": "2026-09-18T06:31:27Z",
+    "type": "negotiation.pending-approval",
+    "state": "PendingApproval",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "requester": {
+      "form": "person-credential",
+      "party": "https://example.org/fdt/party/eu-cardionet-like",
+      "agent": "m.devries@cardionet.example",
+      "affiliation": "https://example.org/fdt/party/eu-cardionet-like",
+      "issuer": "https://idp.example.org/ls-aai-like",
+      "affiliationClaim": "affiliation",
+      "assurance": "presented-only",
+      "assuranceNote": "this station verifies no RFC 8693 exchanged token (nothing in this ecosystem performs the exchange yet), so the acting person named above stands on the Handler's assertion and was not verified here (ADR-044 \u00a75: recorded, not broken)"
+    },
+    "checkpoint": "NEG",
+    "message": "Every condition of the offer is satisfied and this station may not conclude the agreement itself: this station is configured to have a person decide (ADR-034). The match and this recommendation are what the approver is shown.",
+    "justification": {
+      "decision": "permit-with-duties",
+      "rule": "NEG: derived per protocol/agreement-derivation.md; a person concludes it",
+      "evidence": {
+        "offer": "https://example.org/fdt/offer/ut-gene-disease-research",
+        "request": "https://example.org/fdt/request/gd-2026",
+        "granted": [
+          "deliverResult",
+          "runQuery"
+        ],
+        "regime": {
+          "network": "https://example.org/fdt/net/health-research-nl",
+          "permitsAutomatedDecision": true,
+          "source": "configured",
+          "establishedByTheNetwork": false
+        }
+      }
+    },
+    "approval": {
+      "controller": "https://example.org/fdt/party/ut-life-sciences",
+      "mode": "HumanByStationPolicy",
+      "recommendation": "grant",
+      "rule": "https://example.org/fdt/station/ut"
+    },
+    "dsp": {
+      "negotiationState": "REQUESTED"
+    }
+  },
+  {
+    "id": "https://station.ut.example/fdt/v1/events/0005-m1v6",
+    "visit": "https://example.org/fdt/visit/m1-v6",
+    "station": "https://example.org/fdt/station/ut",
+    "sequence": 5,
+    "attempt": 1,
+    "time": "2026-09-18T06:31:27Z",
+    "type": "negotiation.refused",
+    "state": "Refused",
+    "run": "https://example.org/fdt/run/gd-m1-01",
+    "checkpoint": "NEG",
+    "reason": "This cohort is under embargo until the consortium's own analysis is published, and the committee does not release it early for any purpose.",
+    "justification": {
+      "decision": "deny",
+      "rule": "NEG: the controller decided (ADR-032); their stated reason stands",
+      "evidence": {
+        "approval": "380c462cf9a3",
+        "decidedBy": "approver:0b132303bb",
+        "decidedUnderAuthority": "https://example.org/fdt/authority/ut-data-access-committee",
+        "shownAtDecision": "sha256:2f2c09409a555fc9bdfb2aae277a7fcb7ebba84e6135d05d40ffac8f863a7e71",
+        "followedRecommendation": false
+      }
+    },
+    "dsp": {
+      "negotiationState": "TERMINATED"
+    }
+  }
+]

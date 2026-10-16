@@ -1,0 +1,66 @@
+{
+  "protocol": "https://w3id.org/fdt/visit-protocol/v1",
+  "visit": "https://example.org/fdt/visit/m1-v1",
+  "run": "https://example.org/fdt/run/gd-m1-01",
+  "station": "https://example.org/fdt/station/ut",
+  "hop": 1,
+  "phase": 1,
+  "attempt": 1,
+  "train": "https://example.org/fdt/train/gene-disease",
+  "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+  "state": "delivered",
+  "deliveredAt": "2026-09-12T09:04:22Z",
+  "inspection": {
+    "outcome": "passed",
+    "onwardStateClass": "Aggregate",
+    "outputSchema": "https://example.org/fdt/schemas/gene-disease-output",
+    "justification": "Result validates against the train's declared output schema; 5 cells, smallest counts 14 subjects, k=5 required by the agreement's odrl:aggregate duty; no record-level field present."
+  },
+  "result": {
+    "rows": [
+      {
+        "gene_symbol": "TTN",
+        "disease": "https://example.org/fdt/gd/disease/dilated-cardiomyopathy",
+        "disease_label": "Dilated cardiomyopathy",
+        "evidence_count": 6,
+        "subject_count": 62
+      },
+      {
+        "gene_symbol": "MYH7",
+        "disease": "https://example.org/fdt/gd/disease/hypertrophic-cardiomyopathy",
+        "disease_label": "Hypertrophic cardiomyopathy",
+        "evidence_count": 5,
+        "subject_count": 40
+      },
+      {
+        "gene_symbol": "LMNA",
+        "disease": "https://example.org/fdt/gd/disease/dilated-cardiomyopathy",
+        "disease_label": "Dilated cardiomyopathy",
+        "evidence_count": 4,
+        "subject_count": 23
+      },
+      {
+        "gene_symbol": "MYH7",
+        "disease": "https://example.org/fdt/gd/disease/dilated-cardiomyopathy",
+        "disease_label": "Dilated cardiomyopathy",
+        "evidence_count": 3,
+        "subject_count": 18
+      },
+      {
+        "gene_symbol": "LMNA",
+        "disease": "https://example.org/fdt/gd/disease/conduction-disease",
+        "disease_label": "Cardiac conduction disease",
+        "evidence_count": 2,
+        "subject_count": 14
+      }
+    ],
+    "cell_count": 5,
+    "min_subject_count": 14
+  },
+  "onward": {
+    "stateClass": "Aggregate",
+    "destination": "handler"
+  },
+  "events": "https://station.ut.example/fdt/v1/visits/m1-v1/events",
+  "provenance": "https://station.ut.example/fdt/v1/visits/m1-v1/prov"
+}

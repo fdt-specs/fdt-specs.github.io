@@ -1,0 +1,10 @@
+<p>
+	[STATUSTEXT]
+<p>
+	This document was created by the FAIR Data Team. Its source is maintained in the
+	<a href="https://github.com/fdt-specs/fdt-specs.github.io">fdt-specs/fdt-specs.github.io</a>
+	repository and built with <a href="https://speced.github.io/bikeshed/">Bikeshed</a>; comments and
+	corrections are welcome as issues or pull requests there. The behaviour it specifies is exercised by
+	the <a href="https://github.com/FAIRDataTeam/FAIRDataTrain">FAIR Data Train reference implementation</a>,
+	whose shared contracts (<a href="https://github.com/FAIRDataTeam/fdt-commons">fdt-commons</a>) are the
+	normative artefacts this text describes.

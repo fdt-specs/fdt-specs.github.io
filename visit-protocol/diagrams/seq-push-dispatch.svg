@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 820" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <title>Visit protocol — push dispatch, callback reporting</title>
+  <desc>Sequence diagram of one visit under push dispatch: the Train Handler pushes a visit descriptor, the Data Station checks it at PEP 1, negotiates and signs the assigner's side, announces that it is awaiting the assignee's signature, the Handler fetches the agreement and posts its signature, the station activates the agreement, queues and runs the train, inspects the result at PEP 3 and delivers the envelope. Every station decision is an event pushed to the Handler's callback URL.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <marker id="arrow-open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10" fill="none" stroke="#333" stroke-width="1.5"/>
+    </marker>
+  </defs>
+  <style>
+    .life { stroke: #777; stroke-dasharray: 5 4; }
+    .msg  { stroke: #333; stroke-width: 1.4; marker-end: url(#arrow); }
+    .evt  { stroke: #1f6f8b; stroke-width: 1.2; marker-end: url(#arrow-open); }
+    .lbl  { fill: #222; }
+    .evl  { fill: #1f6f8b; }
+    .box  { fill: #f4f6f8; stroke: #333; stroke-width: 1.2; }
+    .pep  { fill: #fff8e1; stroke: #b8860b; stroke-width: 1; }
+    .pepl { fill: #7a5a00; font-size: 12px; }
+    .note { fill: #fffbe6; stroke: #c9b458; }
+    .small { font-size: 11.5px; fill: #444; }
+  </style>
+
+  <!-- participants -->
+  <rect class="box" x="60" y="20" width="180" height="40" rx="3"/>
+  <text class="lbl" x="150" y="45" text-anchor="middle" font-weight="bold">Train Handler</text>
+  <rect class="box" x="640" y="20" width="180" height="40" rx="3"/>
+  <text class="lbl" x="730" y="45" text-anchor="middle" font-weight="bold">Data Station</text>
+  <line class="life" x1="150" y1="60" x2="150" y2="790"/>
+  <line class="life" x1="730" y1="60" x2="730" y2="790"/>
+
+  <!-- 1 push -->
+  <line class="msg" x1="150" y1="95" x2="728" y2="95"/>
+  <text class="lbl" x="440" y="89" text-anchor="middle"><tspan font-family="monospace">POST /visits</tspan> — visit descriptor</text>
+  <rect class="pep" x="745" y="104" width="190" height="30" rx="3"/>
+  <text class="pepl" x="840" y="123" text-anchor="middle">PEP 1 · token, descriptor, payload digest</text>
+  <line class="msg" x1="728" y1="150" x2="152" y2="150"/>
+  <text class="lbl" x="440" y="144" text-anchor="middle"><tspan font-family="monospace">202 Accepted</tspan> · <tspan font-family="monospace">Location: /visits/{id}</tspan></text>
+  <line class="evt" x1="728" y1="178" x2="152" y2="178"/>
+  <text class="evl" x="440" y="172" text-anchor="middle">event <tspan font-family="monospace">visit.received</tspan> → Checking</text>
+
+  <!-- NEG -->
+  <rect class="pep" x="745" y="192" width="190" height="30" rx="3"/>
+  <text class="pepl" x="840" y="211" text-anchor="middle">NEG · request × offers (network)</text>
+  <line class="evt" x1="728" y1="240" x2="152" y2="240"/>
+  <text class="evl" x="440" y="234" text-anchor="middle">event <tspan font-family="monospace">negotiation.requested</tspan></text>
+  <line class="evt" x1="728" y1="268" x2="152" y2="268"/>
+  <text class="evl" x="440" y="262" text-anchor="middle">event <tspan font-family="monospace">negotiation.matched</tspan> — justification</text>
+  <rect class="note" x="745" y="280" width="190" height="44" rx="3"/>
+  <text class="small" x="840" y="297" text-anchor="middle">derives the agreement and signs</text>
+  <text class="small" x="840" y="313" text-anchor="middle">the <tspan font-weight="bold">assigner's</tspan> side (ADR-038)</text>
+  <line class="evt" x1="728" y1="345" x2="152" y2="345"/>
+  <text class="evl" x="440" y="339" text-anchor="middle">event <tspan font-family="monospace">negotiation.awaiting-signature</tspan> — agreement IRI, digest to sign</text>
+
+  <!-- signature exchange -->
+  <line class="msg" x1="150" y1="385" x2="728" y2="385"/>
+  <text class="lbl" x="440" y="379" text-anchor="middle"><tspan font-family="monospace">GET /agreements/{id}</tspan></text>
+  <line class="msg" x1="728" y1="412" x2="152" y2="412"/>
+  <text class="lbl" x="440" y="406" text-anchor="middle"><tspan font-family="monospace">200</tspan> · the agreement (JSON-LD or Turtle), assigner-signed</text>
+  <rect class="note" x="20" y="424" width="250" height="44" rx="3"/>
+  <text class="small" x="145" y="441" text-anchor="middle">verifies terms and the assigner's signature,</text>
+  <text class="small" x="145" y="457" text-anchor="middle">signs the <tspan font-weight="bold">assignee's</tspan> side with the owner's key</text>
+  <line class="msg" x1="150" y1="490" x2="728" y2="490"/>
+  <text class="lbl" x="440" y="484" text-anchor="middle"><tspan font-family="monospace">POST /visits/{id}/agreement/signature</tspan> — AgreementSignature</text>
+  <line class="msg" x1="728" y1="518" x2="152" y2="518"/>
+  <text class="lbl" x="440" y="512" text-anchor="middle"><tspan font-family="monospace">200</tspan> · VisitStatus (or <tspan font-family="monospace">422</tspan> UnknownKey | DoesNotVerify | WrongParty | WrongDigest)</text>
+  <line class="evt" x1="728" y1="546" x2="152" y2="546"/>
+  <text class="evl" x="440" y="540" text-anchor="middle">event <tspan font-family="monospace">negotiation.active</tspan> — both parties have signed</text>
+
+  <!-- PEP 2 / EXEC / PEP 3 -->
+  <rect class="pep" x="745" y="558" width="190" height="30" rx="3"/>
+  <text class="pepl" x="840" y="577" text-anchor="middle">PEP 2 · agreement active, quotas</text>
+  <line class="evt" x1="728" y1="606" x2="152" y2="606"/>
+  <text class="evl" x="440" y="600" text-anchor="middle">event <tspan font-family="monospace">visit.queued</tspan> → Queued</text>
+  <rect class="pep" x="745" y="618" width="190" height="30" rx="3"/>
+  <text class="pepl" x="840" y="637" text-anchor="middle">EXEC · adapter runs the payload</text>
+  <line class="evt" x1="728" y1="666" x2="152" y2="666"/>
+  <text class="evl" x="440" y="660" text-anchor="middle">event <tspan font-family="monospace">visit.running</tspan> (· <tspan font-family="monospace">visit.progress</tspan>) → Running</text>
+  <rect class="pep" x="745" y="678" width="190" height="30" rx="3"/>
+  <text class="pepl" x="840" y="697" text-anchor="middle">PEP 3 · result inspection, duties</text>
+  <line class="evt" x1="728" y1="726" x2="152" y2="726"/>
+  <text class="evl" x="440" y="720" text-anchor="middle">events <tspan font-family="monospace">visit.inspecting</tspan> · <tspan font-family="monospace">visit.delivered</tspan> → Delivered</text>
+
+  <!-- result -->
+  <line class="msg" x1="728" y1="766" x2="152" y2="766"/>
+  <text class="lbl" x="440" y="760" text-anchor="middle"><tspan font-family="monospace">PUT {callbackUrl}/result</tspan> — visit-result envelope (or Handler <tspan font-family="monospace">GET /visits/{id}/result</tspan>)</text>
+
+  <text class="small" x="480" y="806" text-anchor="middle">Blue open arrows are events, delivered to the descriptor's callback URL (reporting mode <tspan font-family="monospace">callback</tspan>) or read by the Handler from <tspan font-family="monospace">GET /visits/{id}/events</tspan> (mode <tspan font-family="monospace">poll</tspan>).</text>
+</svg>

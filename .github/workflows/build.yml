@@ -1,0 +1,29 @@
+# The built pages are committed, because GitHub Pages serves this repository's root as it is.
+# This workflow does not publish anything; it checks that what is committed is what the
+# sources build to, so a page cannot silently drift from its specification.
+#
+# One known false alarm: `bikeshed update` fetches the live SpecRef bibliography, so when a
+# specification this document cites changes its title or date upstream, the References section
+# of a fresh build differs from the committed one and this check fails although nothing here
+# changed. The fix is the same as for a real drift — `make` locally and commit the result.
+name: specifications build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the pinned Bikeshed
+        run: pip install 'bikeshed==7.2.0' && bikeshed update
+      - name: Build every specification
+        run: make BIKESHED=bikeshed all
+      - name: The committed pages must be the built pages
+        run: make BIKESHED=bikeshed check

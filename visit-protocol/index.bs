@@ -1,0 +1,1013 @@
+<pre class="metadata">
+Title: FAIR Data Train — Visit Protocol
+Shortname: fdt-visit-protocol
+Level: 1
+Status: DREAM
+Text Macro: DOCSTATUS Editors' Draft
+Status Text: This is the editors' draft of version 1 of the FAIR Data Train Visit Protocol — the protocol between a Data Station and a Train Handler. It is provided for discussion and may change at any moment; its publication does not imply endorsement of its contents by any organization, and it should be cited only as work in progress. The protocol it describes is implemented and exercised end to end by the FAIR Data Train reference implementation; the JSON Schemas, OpenAPI documents and fixtures named in <a href="#artefacts">Appendix B</a> are its normative artefacts, and where this text and those artefacts disagree, the artefacts are what an implementation is held to and this text has an error to be reported.
+URL: https://specs.fairdatatrain.org/visit-protocol/
+!Protocol identifier: <code>https://w3id.org/fdt/visit-protocol/v1</code>
+!Latest version: <a href="https://specs.fairdatatrain.org/visit-protocol/">https://specs.fairdatatrain.org/visit-protocol/</a>
+!Part of: <a href="https://specs.fairdatatrain.org/">FAIR Data Train — General Architecture</a>, version 0.2
+Date: 2026-10-16
+Editor: Luiz Olavo Bonino da Silva Santos, University of Twente and Leiden University Medical Center, l.o.boninodasilvasantos@utwente.nl
+!Contributors: <a href="mailto:kees.burger@health-ri.nl">Kees Burger</a> (Health RI), <a href="mailto:RKaliyap@ITS.JNJ.com">Rajaram Kaliyaperumal</a> (Janssen Pharmaceuticals)
+!Feedback: <a href="mailto:l.o.boninodasilvasantos@utwente.nl?subject=%5Bfdt-visit-protocol%5D%20YOUR%20TOPIC%20HERE">l.o.boninodasilvasantos@utwente.nl</a>
+!Reference Implementation: <a href="https://github.com/FAIRDataTeam/FAIRDataTrain">FAIRDataTeam/FAIRDataTrain</a> · contracts: <a href="https://github.com/FAIRDataTeam/fdt-commons">fdt-commons</a>
+Issue Tracking: GitHub https://github.com/FAIRDataTeam/FAIRDataTrain/issues
+Repository: fdt-specs/fdt-specs.github.io
+Abstract: The FAIR Data Train Visit Protocol specifies the conversation between a Train Handler and a Data Station for one <em>visit</em> — one train, at one station, under one agreement. It covers how a visit is dispatched (by push, or by a station that accepts no inbound connection polling for it), how the station checks what arrived, how an agreement is negotiated on arrival and signed by both parties before anything runs, how every decision the station takes is reported as an event with a justification, how a result is inspected before it leaves and how state is handed from one visit to the next by location and digest and never by value. It defines the three message types — the visit descriptor, the visit event and the visit-result envelope — the two HTTP interfaces, the outcome vocabulary a completeness statement reports to a data consumer verbatim, and what a conforming station and a conforming Handler must do.
+Markup Shorthands: markdown yes, css no, idl no, dfn yes, biblio yes
+Local Boilerplate: header yes, status yes, copyright yes
+Complain About: missing-example-ids no
+</pre>
+
+<pre class="biblio">
+{
+  "FDT-ARCHITECTURE": {
+    "authors": ["Luiz Olavo Bonino da Silva Santos"],
+    "href": "https://specs.fairdatatrain.org/",
+    "title": "FAIR Data Train — General Architecture",
+    "status": "Editors' Draft",
+    "date": "16 October 2026"
+  },
+  "FDT-COMMONS": {
+    "authors": ["FAIR Data Team"],
+    "href": "https://github.com/FAIRDataTeam/fdt-commons",
+    "title": "fdt-commons — shared contracts of the FAIR Data Train ecosystem"
+  },
+  "FDT-ADR": {
+    "authors": ["FAIR Data Team"],
+    "href": "https://github.com/FAIRDataTeam/FAIRDataTrain/tree/master/ReferenceImplementation/docs/adr",
+    "title": "FAIR Data Train — Architecture Decision Records"
+  },
+  "DSP": {
+    "authors": ["Eclipse Dataspace Working Group"],
+    "href": "https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1/",
+    "title": "Dataspace Protocol 2025-1",
+    "date": "2025"
+  },
+  "FDP": {
+    "authors": ["FAIR Data Point Working Group"],
+    "href": "https://specs.fairdatapoint.org/",
+    "title": "FAIR Data Point specification",
+    "status": "Working Draft"
+  }
+}
+</pre>
+
+# Introduction # {#intro}
+
+*This section is non-normative.*
+
+In the FAIR Data Train the computation travels to the data. A <dfn export>train</dfn> — a query,
+an API call, a script or a container — is sent to a <dfn export>Data Station</dfn> that hosts the
+data, runs there under terms negotiated on arrival, and only what passes the station's inspection
+leaves. The <dfn export>Train Handler</dfn> is the consumer's agent that sends the train and
+collects what comes back; the station is where the data controller's conditions are enforced.
+
+The Visit Protocol is the **data plane** of the FDT ecosystem: the conversation between a Handler
+and a station for one <dfn export>visit</dfn> — one train, at one station, under one agreement
+(ADR-014, ADR-027 [[FDT-ADR]]). Every multi-station itinerary a Handler can run — a single
+visit, fan-out, a sequence, a discovery chain, iterative rounds, two-phase selection, composition
+— decomposes into visits, which is why this is deliberately **the only interface a station has to
+implement** to take part in any of them. The Handler owns the run; the station owns the visit.
+
+The protocol is defined by its artefacts as much as by this text. Its three message types are
+JSON Schemas, its two interfaces are OpenAPI documents, its RDF payloads are validated by SHACL
+shapes, and the examples in this document are the published fixtures every implementation is
+tested against — not documents typed into prose. [[#artefacts]] names them, pinned to a commit.
+
+## Scope ## {#scope}
+
+*This section is non-normative.*
+
+This specification covers, for one visit: dispatch in two directions ([[#dispatch]]);
+what a station checks when a train arrives; negotiation on arrival, the derivation of the
+agreement and the signatures of both parties ([[#negotiation]]); execution and the inspection of
+the result ([[#execution]]); the hand-over of state between visits ([[#onward]]); how every
+decision is reported ([[#reporting]]); how a visit ends ([[#outcomes]]); the messages
+([[#messages]]) and the interfaces ([[#station-api]], [[#handler-api]]); and the security model
+([[#security]]).
+
+Three things are **not** in this protocol and live in their own contracts: the station's metadata
+and catalogue ([[FDT-ARCHITECTURE]] §3.1.1, built on [[FDP]] and [[VOCAB-DCAT-3]]); the
+controller's actions over their own data — authoring conditions, approving, revoking, suspending —
+which reach a station through its console or an Individual Gateway; and the catalogues of the
+registry and the Train Depot, from which a train is dereferenced by IRI.
+
+## Reading this document ## {#reading}
+
+*This section is non-normative.*
+
+Decisions behind the protocol are recorded as Architecture Decision Records [[FDT-ADR]] and are
+cited as *ADR-nnn* where the reasoning may matter to an implementer. Questions the protocol
+leaves open are listed in [[#open]] with their register identifiers (*Qnn*); each has a stated
+default that implementations follow until it is decided.
+
+Member names in message tables are written as `camelCase` JSON keys. Where a value is an IRI, it
+is a string in the JSON and an IRI in the vocabulary the schema maps it to.
+
+# Conformance classes # {#conformance-classes}
+
+Three conformance classes are defined. The requirements are stated in the body of this document
+with the key words of [[!RFC2119]] and collected here.
+
+: <dfn export>Push-dispatch station</dfn>
+:: A Data Station that accepts inbound connections. It MUST implement the Station API
+    ([[#station-api]]) — at least `/`, `POST /visits`, `GET /visits/{visitId}`,
+    `GET /visits/{visitId}/events`, `GET /visits/{visitId}/result`, `POST /visits/{visitId}/cancel`
+    and `POST /visits/{visitId}/agreement/signature`; MUST validate descriptors and embedded ODRL
+    requests against the schemas and shapes of [[#artefacts]]; MUST verify the payload digest
+    against the train's depot offer before anything runs; MUST emit every decision as an event with
+    a justification; MUST sign the assigner's side of every agreement it concludes and MUST run
+    nothing under an agreement that does not carry the assignee's signature; MUST NOT let
+    record-level content into an envelope; and, when it receives a hand-over, MUST check the
+    lineage rule of [[#inbound]] before fetching anything.
+: <dfn export>Poll-dispatch station</dfn>
+:: A Data Station that accepts no inbound connection. It MUST implement the poll half of the
+    Handler API as a client ([[#handler-api]]) — `GET /stations/{stationId}/pending-visits`,
+    `POST /visits/{visitId}/ack`, `POST /visits/{visitId}/events`, `PUT /visits/{visitId}/result`
+    and `POST /visits/{visitId}/agreement` — and otherwise meets every requirement of a
+    push-dispatch station. It MUST report by callback, that being the only direction it can open.
+: <dfn export lt="Train Handler (conformance class)">Train Handler</dfn> (conformance class)
+:: A Handler MUST mint the visit IRI of every visit and use it as the idempotency key; MUST embed
+    an ODRL request valid against `fdts:RequestShape` or an existing agreement IRI; MUST honour the
+    plan's `approvalWait` and failure policy; MUST verify the assigner's signature over the stated
+    digest before signing the assignee's side, and MUST refuse to sign a document the station never
+    signed; MUST de-duplicate events on `id` and order them on `sequence`; MUST name
+    `handOver.fromVisit` in the same descriptor's `precededBy` whenever it carries a hand-over; MUST
+    assemble the run record and completeness statement from envelopes and events only; and MUST
+    hold non-personal, aggregate results only (ADR-015).
+
+# Terminology # {#terminology}
+
+: <dfn export>run</dfn>
+:: One execution of a <dfn export>plan</dfn> — a train, its parameter values, an itinerary and a
+    request template — by a Handler. A run is decomposed into visits.
+: <dfn export>hop</dfn>, <dfn export>phase</dfn>
+:: A visit's position in its itinerary: the hop counts outward from the run's entry stations; the
+    phase is the order of the itinerary phase it belongs to. Both are integers from 1.
+: <dfn export>attempt</dfn>
+:: A retry re-dispatches the **same** visit IRI with `attempt` incremented, under the same
+    agreement. Attempts of one visit share its identity and its agreement.
+: <dfn export>agreement</dfn>
+:: The `odrl:Agreement` [[!ODRL-MODEL]] a station derives from the controller's offer and the
+    train's request for one visit, pinned by digest and signed by both parties. One per visit
+    (ADR-014).
+: <dfn export>checkpoint</dfn>
+:: One of the points at which a station decides: <dfn export>PEP 1</dfn> (arrival),
+    <dfn export>NEG</dfn> (negotiation), <dfn export>PEP 2</dfn> (before execution),
+    <dfn export>EXEC</dfn> (execution), <dfn export>PEP 3</dfn> (result inspection) and
+    <dfn export>OBL</dfn> (post-execution obligations).
+: <dfn export>dispatch mode</dfn>
+:: How a visit reaches a station: **push** — the Handler posts it — or **poll** — the station
+    fetches it from the Handler (ADR-004).
+: <dfn export>reporting mode</dfn>
+:: How a station's events and envelope reach the Handler: **callback** — the station posts them to
+    a per-visit URL — or **poll** — the Handler reads them from the station. Note that the two
+    senses of *poll* are different parties reading in different directions; [[#negotiation-signatures]]
+    depends on keeping them apart.
+: <dfn export>onward state</dfn>
+:: What leaves a station other than the result delivered to the Handler: state of class
+    `Aggregate` or `Pseudonym` carried to another station, directly in a choreographed train or
+    through a linkage station. `RecordLevel` never leaves a station.
+: <dfn export>hand-over</dfn>
+:: State produced by an earlier visit of the same run and named, by location and digest, as the
+    input of a later one.
+: <dfn export>outcome</dfn>
+:: The one word a visit ends in: *Delivered*, *Refused*, *Rejected*, *TimedOut*, *Failed*,
+    *Revoked*, or — recorded by the Handler alone — *Skipped* ([[#outcomes]]).
+: <dfn export>canonical form</dfn>
+:: Of a graph *G*: its [[!RDF-CANON]] (URDNA2015) canonical form, serialised as N-Quads, the lines
+    sorted, joined with `\n`, with a trailing `\n`, encoded UTF-8. Every digest a party signs or
+    pins is `"sha256:"` followed by the lowercase hex SHA-256 of a canonical form.
+
+# Parties and identifiers # {#parties}
+
+<table class="data">
+  <thead><tr><th>Party<th>Role in the protocol<th>Identified by
+  <tbody>
+  <tr><td>Train Handler<td>Client of the Station API; server of the Handler API. Mints the visit IRI, embeds the request, signs the assignee's side, applies the failure policy.<td>Its IRI (`consumer.handler`); its own credential at the station ([[#security]]); the consumer's legal party as `consumer.party`.
+  <tr><td>Data Station<td>Server of the Station API; client of the Handler API. Checks the arrival, negotiates, signs the assigner's side, enforces the checkpoints, emits events, returns the envelope.<td>Its IRI (self-description); the identity providers it trusts per network.
+  <tr><td>Train<td>The subject of the visit: an executable asset in a Train Depot's catalogue, with its creator's offer and its payload digest (ADR-020).<td>`train.iri`; its payload by `sha256:` digest.
+  <tr><td>Linkage / alignment station<td>An ordinary station whose mechanism is identifier translation or vocabulary alignment; visited with this protocol.<td>As any station.
+</table>
+
+Identifiers are IRIs. **The visit IRI is the idempotency key of the whole exchange**: a repeated
+push, a retry under the same agreement, and every event and envelope refer to it. A station MUST
+treat a repeated `POST /visits` with the same visit and attempt as a replay and answer with the
+visit's current status. Event IRIs are minted by the station and MUST be unique; `sequence` MUST
+be monotonic per visit and attempt.
+
+A station advertises that it speaks this protocol in its self-description: its dispatch endpoint
+is a `dcat:DataService` whose `dct:conformsTo` is the protocol identifier
+`https://w3id.org/fdt/visit-protocol/v1`, and whose `dcat:endpointURL` is the base URL of the
+Station API.
+
+# Overview of a visit # {#overview}
+
+*This section is non-normative; the sections it points at are normative.*
+
+<figure id="fig-push">
+  <img src="diagrams/seq-push-dispatch.svg" width="960" height="820" alt="Sequence diagram of one visit under push dispatch: the Handler pushes a visit descriptor; the station checks it at PEP 1 and answers 202; it negotiates, signs the assigner's side and emits negotiation.awaiting-signature; the Handler fetches the agreement and posts its signature; the station emits negotiation.active, queues and runs the train, inspects the result at PEP 3 and delivers the envelope. Every decision is an event.">
+  <figcaption>One visit, push-dispatched, callback-reported. Solid arrows are requests; open blue arrows are events.</figcaption>
+</figure>
+
+1. **Dispatch.** The Handler composes a [=visit descriptor=] and pushes it to the station, or a poll-dispatch station fetches it from the Handler ([[#dispatch]]).
+2. **PEP 1.** The station verifies the caller's credential against the identity providers it trusts for the visit's network, validates the descriptor against its schema and the embedded ODRL request against `fdts:RequestShape`, checks that the train's payload digest equals the one in the train's depot offer, and checks that it supports the train's mechanism. A failure **rejects** the visit; otherwise it emits `visit.received`.
+3. **Negotiation.** The station matches the request against the controller's offer for the visit's network and the owner's policy. The outcome is a match, a case put to a person, or a **refusal** — which is the controller's decision, never the station's ([[#negotiation]]).
+4. **Signatures.** The station derives the agreement, signs the **assigner's** side and asks for the assignee's; the Handler verifies the terms and that signature and signs the **assignee's** side with the train owner's key. Only then does the agreement become active, and only then does anything run ([[#negotiation-signatures]]).
+5. **PEP 2 and execution.** The station checks that the agreement is active and about this visit and that its quotas allow the run, queues it, and runs the payload through the adapter for the train's mechanism.
+6. **PEP 3.** The station validates the result against the train's declared output schema, checks every duty of the agreement on it, and decides what leaves and where ([[#execution]]). A failure **rejects** the result; nothing leaves.
+7. **Delivery.** The visit-result envelope is pushed to the Handler's callback URL or fetched by the Handler, and the visit ends in one of the outcomes of [[#outcomes]].
+
+<figure id="fig-poll">
+  <img src="diagrams/seq-poll-dispatch.svg" width="960" height="700" alt="Sequence diagram of one visit under poll dispatch: the station fetches its pending descriptors from the Handler and acknowledges one; after negotiating and signing it sends the agreement to the Handler in one round trip and receives the assignee's signature in the response; it pushes events and the envelope to the Handler. Every arrow is opened by the station.">
+  <figcaption>The same visit for a station that accepts no inbound connection: every arrow is opened by the station, and the signature exchange is one round trip the station makes.</figcaption>
+</figure>
+
+# Dispatch # {#dispatch}
+
+## Push dispatch ## {#dispatch-push}
+
+Under push dispatch the Handler `POST`s the visit descriptor to the station's dispatch endpoint,
+read from the station's self-description. The station MUST answer `202 Accepted` with a
+`Location` header naming the visit's status URL and a [=VisitStatus=] body when the visit was
+taken; `200` with the current status on an idempotent replay; `400` with a [=Problem=] when the
+visit is rejected at PEP 1; `401` when the credential is missing or untrusted; `403` with a
+Problem when the visit is refused at negotiation; `409` when the same visit IRI is known with a
+different, still-running attempt; and `415` when the station does not support the train's
+mechanism.
+
+## Poll dispatch ## {#dispatch-poll}
+
+A station that cannot accept inbound connections MUST instead call
+`GET /stations/{stationId}/pending-visits` on the Handler, which returns the descriptors waiting
+for it and MAY long-poll for up to `wait` seconds. For each descriptor it takes, the station MUST
+`POST /visits/{visitId}/ack` with its first event — `visit.received` — or with a Problem if the
+visit is rejected at PEP 1. An acknowledgement answered `409` means the Handler withdrew the visit
+meanwhile, and the station MUST NOT start it. Beyond the gateway, processing is identical to push
+dispatch (ADR-004).
+
+A station advertises its dispatch mode or modes in its self-description; the Handler chooses per
+station.
+
+## Reporting modes ## {#dispatch-reporting}
+
+The descriptor's `reporting.mode` selects how the station's events and envelope reach the Handler.
+Under **callback** the station `POST`s events to `{callbackUrl}/events` and `PUT`s the envelope to
+`{callbackUrl}/result`, presenting the descriptor's `callbackToken` as a bearer token. Under
+**poll** the Handler reads `GET /visits/{visitId}/events?after=n` — or subscribes with
+`Accept: text/event-stream` — and fetches `GET /visits/{visitId}/result`. A poll-dispatch station
+MUST report by callback.
+
+## Idempotency, attempts and withdrawal ## {#dispatch-idempotency}
+
+A Handler retrying a *Failed* visit MUST re-dispatch the same visit IRI with `attempt` incremented
+by one and `negotiation.agreement` set to the existing agreement; the station MUST reuse that
+agreement rather than negotiate anew. The Handler withdraws a visit with
+`POST /visits/{visitId}/cancel`, stating a `reason` and a `cause` from `approval-timeout`,
+`fail-run`, `stopped-by-person`, `deadline` or `replanned`; a queued or pending visit ends at once
+and a running one stops at its next checkpoint ([[#outcomes-cancel]]).
+
+# Negotiation on arrival # {#negotiation}
+
+## Request or agreement ## {#negotiation-request}
+
+The descriptor's `negotiation` member carries **either** an `odrl:Request` — JSON-LD, validated at
+PEP 1 against `fdts:RequestShape` — **or** the IRI of an existing active agreement (rounds of an
+iterative pattern, retries). With an agreement IRI the station MUST verify that the agreement is
+active, that its target and assignee match the visit, and that it was concluded at this station;
+otherwise the visit is **Rejected** at PEP 2.
+
+With a request, the station MUST match it against the controller's offers **for the visit's
+network** (ADR-017) and the station owner's policy, and MUST emit `negotiation.requested` first.
+The request names the network under `fdt-p:underNetwork`, the train under `fdt-p:train`, the
+target dataset or part, the assignee and the actions it asks for with their constraints, of which
+a purpose is required. The descriptor's `consumer.party` and the request's `odrl:assignee` MUST
+name the same party; a station MUST reject at PEP 1 a descriptor in which they differ, since the
+agreement binds the request's assignee while every record a controller is shown names the
+descriptor's consumer.
+
+## Matched, pending, refused ## {#negotiation-outcome}
+
+Matching has three outcomes.
+
+: Matched
+:: The offer and the request are satisfiable and the station may conclude. It emits
+    `negotiation.matched` with a justification and proceeds to derive and sign the agreement.
+    `negotiation.matched` MUST be emitted only when the two are satisfiable: the state means
+    exactly that, and maps to the Dataspace Protocol's OFFERED or AGREED, neither of which describes
+    a request nothing can satisfy.
+: Pending approval
+:: A person must decide. A station emits `negotiation.pending-approval` carrying an `approval`
+    object that names the controller who must decide, the `mode` that says why a person is
+    deciding, the `rule` that imposed it, the station's `recommendation`, the eligibility facts it
+    could not establish, and its own `expiresAt`. The modes are `HumanRequiredByRegulation` (the
+    network's regime bars automated decisions), `HumanByControllerPreference` (the offer asks for
+    a person), `HumanByStationPolicy` (the operator configured one) and
+    `HumanByInconclusiveEvaluation` (the controller's conditions did not answer — the request asks
+    for something no permission addresses, or a fact could not be established; ADR-050). **Where
+    a machine may not grant, it may not refuse either** (ADR-032): a visit whose evaluation
+    recommends refusal in a network that bars automated decisions goes from `negotiation.requested`
+    straight to `negotiation.pending-approval`, without a `negotiation.matched`, and the
+    `recommendation` is what tells the two apart. A recommendation is not an outcome.
+: Refused
+:: The controller's standing conditions declined the request — conclusively, under a rule of the
+    offer — or a person did. The station emits `negotiation.refused` with the stated `reason` and
+    the `justification`, and the visit's outcome is **Refused**. This is a governance decision by a
+    named party and is never reported in any other word ([[#outcomes]]).
+
+<figure id="fig-pending">
+  <img src="diagrams/seq-pending-approval.svg" width="960" height="640" alt="Sequence diagram of a visit that waits for a person: negotiation.pending-approval names the controller, the rule, the recommendation and a timeout; then either a grant leads to the signature exchange and negotiation.active, a refusal leads to negotiation.refused with the controller's words, or the Handler's approval wait runs out and it cancels, leading to negotiation.withdrawn and TimedOut.">
+  <figcaption>A visit that waits for a person, and its three endings</figcaption>
+</figure>
+
+While a visit is pending, the Handler MUST wait up to the plan's `approvalWait` and then either
+withdraw the visit (`POST /visits/{visitId}/cancel`, cause `approval-timeout`) or keep waiting as
+its failure policy says. The station MAY apply its own timeout (`approval.expiresAt`). A visit
+withdrawn because nobody decided ends **TimedOut**, and MUST NOT be reported as Refused or
+Rejected: nobody decided anything, and that is the fact to report.
+
+## Derivation of the agreement ## {#negotiation-derivation}
+
+An agreement that merely has the right shape is not an agreement anyone can audit. A station MUST
+derive the agreement from the offer *O* (restricted to the visit's network), the request *R* and
+the visit *V* by the following rule, which `fdt-commons` executes over every published agreement
+and which a station's own agreements are held to:
+
+1. **Actions.** The agreement grants exactly `actions(R) ∩ actions(O)`. If no action survives there is no agreement and the outcome is Refused, naming the rule.
+2. **Constraints.** Every `odrl:LeftOperand` of the FDT profile has a `fdt-p:constraintRole`: **Eligibility** constraints (legal basis, consumer type, network, jurisdiction, train, mechanism) are established once at negotiation and become **evidence**, never terms; **Usage** constraints (purpose, onward state class, k-anonymity, retention, validity window) become terms re-checked at PEP 2 and PEP 3. For each granted action and each usage operand *O*'s matching rule constrains, the agreement carries *what was asked, bounded by what was offered*: *R*'s constraint if *O* admits it, otherwise *O*'s. Every usage constraint of *O*'s matching rule MUST appear, and every usage constraint *R* placed on itself MUST appear too.
+3. **Prohibitions and duties** of *O* are carried **verbatim**. Nothing in negotiation may drop or weaken one, and no approver may waive one.
+4. **Evidence.** For every eligibility constraint of *O* the agreement carries one `fdt-p:evidence` node: the fact, the established value, who attested it and when. The person who dispatched the train appears as a pseudonym the station can resolve in its own audit log; their identifier does not enter the agreement.
+5. **Pinning.** The agreement carries `fdt-p:derivedFromOffer`, `fdt-p:derivedFromRequest`, `fdt-p:train`, and the digests `fdt-p:offerDigest`, `fdt-p:requestDigest` and `fdt-p:payloadDigest` of each as it stood.
+6. **Parties.** The agreement's `odrl:assigner` MUST be the offer's assigner and its `odrl:assignee` MUST be the request's assignee; `odrl:target` and `fdt-p:underNetwork` MUST be the visit's; `dspace:timestamp` and `fdt-p:authorisationMode` MUST be present.
+
+A station policy may narrow the result further; narrowing is always permitted and widening never is.
+
+## Signatures of both parties ## {#negotiation-signatures}
+
+The station writes the agreement and is a party to it; digests make a rewrite detectable by
+whoever kept the original, but prove nothing to a third party who kept nothing — a supervisory
+authority, or a controller asking later under what terms their data was touched. **So each party
+signs** (ADR-038), and an agreement carries one `fdt-p:signature` of each role,
+`fdt-p:AssignerSignature` and `fdt-p:AssigneeSignature`.
+
+### What is signed ### {#negotiation-signatures-form}
+
+The signed digest is the SHA-256 of the [=canonical form=] of the agreement's concise bounded
+description **with every `fdt-p:signature` node excluded** — not only the signer's own — so that
+both parties sign one string, neither signature covers the other, the order they were made in is
+not part of what was agreed, and neither party can invalidate the other's by re-signing.
+
+A signature is Ed25519 [[!RFC8032]] (`EdDSA`) over the digest string as UTF-8, encoded base64url
+without padding. `fdt-p:keyId` is the IRI of the public key in the **signer's own** published key
+set [[!RFC7517]], so a verifier needs nothing from either party. Signing keys are not the bearer
+tokens of [[#security]]: a token proves who called, a signature proves who agreed.
+
+### Who signed, and for whom ### {#negotiation-signatures-roles}
+
+`fdt-p:signedBy` names whose **key** it is. `fdt-p:onBehalfOf` names whose **agreement** it is,
+and MUST be present exactly when the two differ — when an agent signed.
+
+<table class="data">
+  <thead><tr><th><th>`signedBy`<th>`onBehalfOf`
+  <tbody>
+  <tr><td>The train owner signs (assignee)<td>the owner; the key is published by their Handler<td>absent
+  <tr><td>A data controller with their own key signs (assigner)<td>the controller<td>absent
+  <tr><td>The station signs for a controller who holds no key<td>the station<td>the controller
+</table>
+
+*The controller signed* and *the station signed for the controller* are different facts with
+different weight, and a record that let them be confused would be worth less than no signature,
+because a verifier would read the weaker as the stronger. A station signing as an agent MUST carry
+`onBehalfOf`; a party signing for themselves MUST NOT; a signature naming as its principal the
+party who made it MUST be refused — a party is not their own agent.
+
+### The exchange, in two shapes ### {#negotiation-signatures-exchange}
+
+The two-signature rule fixes the order: the station derives the terms and signs the assigner's
+side; the Handler verifies the terms **and that signature** and signs the assignee's side; the
+station stores the fully signed agreement and only then emits `negotiation.active`. Which party
+opens the call is decided by the **dispatch mode and by nothing else**.
+
+**Push-dispatched station.** After `negotiation.matched` the station emits
+`negotiation.awaiting-signature`, carrying the agreement IRI and, in the justification's evidence,
+`agreementDigest` — the digest to sign. The Handler fetches the agreement
+(`GET /agreements/{agreementId}`), computes the digest for itself from the document it read,
+checks that it equals the one stated, verifies the assigner's signature over it, checks the terms,
+signs the digest with the train owner's key and `POST`s an [=AgreementSignature=] to
+`POST /visits/{visitId}/agreement/signature`. The station verifies it against the key it holds for
+that party, stores it, emits `negotiation.active` and queues the run. The visit stays at `Checking`
+throughout: nothing about it is waiting on a *person*.
+
+**Poll-dispatched station.** The station has no inbound port, so it cannot be told to wait to be
+called; it emits no `negotiation.awaiting-signature` and instead opens **one round trip of its
+own**: `POST /visits/{visitId}/agreement` on the Handler, with a [=CountersignatureRequest=]
+carrying the agreement IRI, the agreement **itself** — as canonical N-Quads or Turtle, never a JSON
+projection, because the document is what the signature is checked against — and the assigner's
+signature. The Handler applies exactly the checks above and answers `201` with the assignee's
+[=Countersignature=], or `422` with a [=CountersignatureRefused=]. The station then stores both
+signatures, emits `negotiation.active` and queues the run. Because no wait occurred, the stream
+MUST NOT contain `negotiation.awaiting-signature`; instead `negotiation.active` carries
+`signatureRoute: station-initiated` and `dispatchMode: poll` in its justification's evidence, so
+which way the exchange went is stated rather than inferred from an absence.
+
+In both shapes the Handler MUST NOT sign a document the station has not signed, MUST NOT sign a
+digest other than the one it computed from the document itself, and MUST NOT sign a document
+whose assigner signature is for a party other than the agreement's assigner.
+
+### Refusing a signature ### {#negotiation-signatures-refusals}
+
+A verifier refusing a signature MUST say which of four things it found, because a verifier has to
+distinguish them and one status for all four would leave the first hunting a forgery that never
+happened:
+
+<table class="data">
+  <thead><tr><th>Reason<th>Meaning
+  <tbody>
+  <tr><td>`UnknownKey`<td>The verifier holds no key for the signing party. A key-distribution problem; says nothing about the signature.
+  <tr><td>`DoesNotVerify`<td>The signature is wrong.
+  <tr><td>`WrongParty`<td>Valid cryptography by somebody who is not the party in that role, nor an agent naming them.
+  <tr><td>`WrongDigest`<td>The digest the signature states is not the canonical digest of the document in hand: the two sides are not looking at the same bytes.
+</table>
+
+Keys are configured **out of band**, symmetrically: a station holds the public key of each train
+owner whose Handler may visit it; a Handler holds the public key of each station it dispatches to.
+A verifier MUST NOT take the key from the document it is verifying, which would establish only
+that the signer holds the key they nominated. A party for which no key is held is answered
+`UnknownKey`. Whether a network's trust anchors may vouch for a station's signing key is open (Q61).
+
+### When the assignee does not sign ### {#negotiation-signatures-unsigned}
+
+An agreement only one party has signed is not an agreement, and nothing runs under one. If the
+assignee's Handler cannot be reached or will not accept the terms, the visit does not proceed.
+The station records no outcome and the visit rests at `negotiation.awaiting-signature` until it is
+withdrawn, which is the behaviour a pending approval already has; the Handler reports its own run
+as failed when it stops waiting. What outcome the station should record is open (Q27). It is
+deliberately **not** Refused: a consumer walking away is not the controller refusing.
+
+# Execution and inspection # {#execution}
+
+**PEP 2.** Before execution the station MUST check that the agreement is active and carries both
+signatures, that it is about this visit — its target, train, network and assignee match the
+descriptor's — and that its usage terms admit the run now (the validity window) and that the
+station's quotas allow it. A failure here **rejects** the visit at PEP 2, and the station MUST emit
+`visit.queued` on success.
+
+**EXEC.** The adapter for `train.mechanism` executes the payload with the descriptor's parameters,
+passed to the adapter unchanged; the station emits `visit.running` and MAY emit `visit.progress`.
+An error in the adapter or the infrastructure ends the visit **Failed**.
+
+**PEP 3.** A train has run and whatever it produced is inside the station. Everything before this
+point decided whether the train could run; this decides whether what it produced may leave, and
+the first cannot answer the second: the same train under the same agreement produces a releasable
+result for one parameter and an unreleasable one for another. The station MUST perform these checks
+in order, and the first that fails ends the inspection with nothing released:
+
+1. The train declares an output schema (`fdt-o:generatesOutput` → `dct:conformsTo`, a JSON Schema [[!JSON-SCHEMA]]) and it resolves.
+2. That schema is **closed**: every object sets `additionalProperties: false` and every array describes its items. Against an open schema, a result carrying an identifier on every row validates, and "the result conforms to the declared output" would be a statement about nothing.
+3. The result validates against it, with no relaxation.
+4. The onward state class being released is admitted by the agreement's `fdt-p:deliverResult` permission and by the descriptor's `onward.allowedClasses`. `RecordLevel` never leaves a station, whatever any agreement says.
+5. Every duty of the agreement holds on the result. A k-anonymity duty is applied to every value the declared output schema marks `x-fdt-subjectCount: true`; a count of 0 does not violate it and a count between 1 and *k*−1 does. **A duty the station cannot check is not a duty that passes**: if the agreement carries a k duty and the schema marks no subject count, the result is rejected with that stated. Prohibitions on what the consumer does after delivery (`fdt-p:reidentify`, `odrl:sell`) cannot be checked by inspecting a result; they bind the consumer through the agreement and the station MUST NOT list them as passed.
+6. The envelope names the schema it was checked against (`inspection.outputSchema`), so an auditor can re-run steps 2 and 3 without the station's cooperation.
+
+The inspection's outcome is `passed`, `redacted` (cells suppressed to meet a threshold — a
+**Delivered** visit) or `rejected` (a **Rejected** visit, releasing nothing — not a partial result,
+not a count beyond what the justification states). The station emits `visit.inspecting` and then
+`visit.delivered` or `visit.rejected` at checkpoint `PEP3`, with the verdict's evidence.
+
+# Onward state and hand-over # {#onward}
+
+## What leaves ## {#outbound}
+
+The descriptor's `onward` block is the plan's request; PEP 3 applies the controller's offer, which
+may be stricter. The destination is **handler** (the default: the envelope's `result` and
+`artifacts`), **linkage** (`Pseudonym`-class state is handed to the named linkage station under the
+named join key; the envelope records the hand-over digest and the linkage station verifies it on
+its own visit) or **train** (a choreographed script or container train carries state and a routing
+instruction; in version 1 the train returns to the Handler between hops, so the envelope's
+`routing.nextStations` is what the Handler dispatches next, inspected at PEP 3 like any other
+output). Query and API trains MUST NOT use destination `train`.
+
+## What arrives ## {#inbound}
+
+A later visit of the same run receives earlier state through the descriptor's `handOver` block,
+which **names the hand-over and never carries it**: `fromVisit`, `fromStation`, `url`,
+`mediaType`, `digest`, `stateClass`, and optionally `joinKey`, `conformsTo`, `duties` and `bytes`.
+The Handler holds a name, which is what ADR-015 permits it to hold; the bytes stay at the station
+that produced them. The following rules apply:
+
+* The object is **closed** and has no member that takes content. `url` MUST be an `https` location: `data:` and `blob:`, the two ways a reference carries its own payload, are refused by the schema rather than deprecated in prose, and so is plaintext `http`, because all traffic between the parties is over TLS. The same pattern binds `artifacts[].url` in the envelope that feeds this block ([[#result-envelope]]).
+* **`handOver.fromVisit` MUST also appear in the descriptor's `precededBy`.** The hand-over is the reason this visit follows that one, and a descriptor naming a predecessor in one place that its own lineage does not name in the other describes two different runs. JSON Schema cannot compare a member with the contents of another member's array, so the schema requires only that a hand-over is not carried without a lineage; the membership is a rule of this protocol, binding on the Handler that composes the descriptor, and a receiving station MUST check it before fetching anything — it is decidable from the one document in front of it at PEP 1.
+* A descriptor that carries a hand-over MUST ask permission to accept it: its request MUST contain a permission for the action `fdt-p:acceptHandOver`, constrained by `fdt-p:inboundStateClass` to say which class of state it accepts. Being asked to join one's own records against a list a third party composed is a different thing to consent to from being asked to run a container.
+* The receiving station fetches `url`, hashes what it got and compares it to `digest` — the same value the producing station reported as `onward.handedOverDigest` — so the hand-over is bound to bytes on both sides of the hop.
+
+Whether a station that cannot verify the bytes must refuse at PEP 1 or may run and report the
+result unverifiable (Q133, Q130), who may fetch a hand-over from the station holding it and under
+which credential (Q136), and how a hop with two inputs is expressed (Q135) are open; version 1
+names the location and nothing else.
+
+# Reporting # {#reporting}
+
+## Events ## {#reporting-events}
+
+Every decision a station takes and every state change of a visit MUST be emitted as a
+[=visit event=] (ADR-027). The ordered event stream is the source of truth for the Handler's view
+of the run and for the audit trail a controller reads; the Handler needs nothing else to drive its
+itinerary map and its completeness statement. Delivery is **at least once**: a Handler MUST
+de-duplicate on `id` and order on `sequence`. A station MAY batch events in one callback if all
+belong to the visit in the path.
+
+Under reporting mode `poll`, `GET /visits/{visitId}/events?after=n` returns the events with
+`sequence` greater than *n*; with `Accept: text/event-stream` a station MAY stream new events as
+Server-Sent Events, each `data:` line one event object and `id:` the sequence.
+
+Every decision event carries a `justification`: the decision, the rule that fired, the offer,
+agreement or station policy it came from, and evidence — counts, digests, cell counts, **never
+record-level content**.
+
+## Result and artefacts ## {#reporting-result}
+
+The [=visit-result envelope=] is available once the visit is in a terminal state: under callback
+the station `PUT`s it to `{callbackUrl}/result`; under poll the Handler fetches
+`GET /visits/{visitId}/result`, which answers `409` while the visit is not yet terminal. For a
+non-success outcome the envelope is returned with an empty `result`, the outcome in `state` and the
+stated `reason`. Artefacts too large to inline are referenced by `artifacts[].url` on the station
+and fetched by the Handler, or — in poll mode — uploaded by the station with
+`PUT /visits/{visitId}/artifacts/{name}`, where the Handler MUST verify the digest against the
+envelope and answer `409` on a mismatch.
+
+# Outcomes, cancellation, retries, revocation # {#outcomes}
+
+Every visit ends in exactly one terminal outcome, and the words are part of the contract
+(ADR-026): a run's completeness statement reports them to a data consumer verbatim, and
+implementations MUST keep the vocabulary exact in code, logs and user interfaces.
+
+<table class="data">
+  <thead><tr><th>Outcome<th>Where<th>Meaning<th>Whose word
+  <tbody>
+  <tr><td><dfn export>Delivered</dfn><td>PEP 3<td>The result passed inspection and left; `inspection.outcome` is `passed` or `redacted`.<td>—
+  <tr><td><dfn export>Refused</dfn><td>NEG<td>Access was declined by the controller's standing conditions, or by a person asked to decide.<td>A **controller's** decision, with their stated reason, carried verbatim.
+  <tr><td><dfn export>Rejected</dfn><td>PEP 1, PEP 2, PEP 3<td>A checkpoint's verdict on a document or a result: an invalid descriptor, a payload that is not the one offered, an agreement that is not this visit's, a result a duty forbids.<td>A **checkpoint's**; nobody decided anything.
+  <tr><td><dfn export>TimedOut</dfn><td>NEG or EXEC<td>The approval wait ran out, or the Handler cancelled the visit.<td>**Nobody** decided.
+  <tr><td><dfn export>Failed</dfn><td>EXEC — or NEG, when a station broke carrying out a decision already taken<td>Machinery broke.<td>—
+  <tr><td><dfn export>Revoked</dfn><td>PEP 2 or EXEC<td>The controller took the agreement out of force while the visit was queued or running; the station stops at its next checkpoint.<td>A **controller's** act over an agreement they granted, with their reason.
+  <tr><td><dfn export>Skipped</dfn><td>never reaches a station<td>The run did not ask this station: a phase condition excluded it (`NotSelected`), the first phase did not deliver (`NotEvaluated`), it was reachable only through a missing visit (`Pruned`), or the failure policy dropped it (`Dropped`).<td>The **Handler's** record. No station can report it about itself.
+</table>
+
+<figure id="fig-states">
+  <img src="diagrams/state-visit.svg" width="960" height="560" alt="State diagram of a visit: Checking, PendingApproval, Queued, Running and Inspecting as non-terminal states; Delivered, Refused, Rejected, TimedOut, Failed and Revoked as terminal outcomes, each reached by the event that announces it.">
+  <figcaption>The states of a visit at a station, and the event that enters each</figcaption>
+</figure>
+
+Reporting a controller's refusal as a rejection tells a consumer that their request failed a check
+when a person declined it; reporting a timeout as either puts a verdict in the mouth of somebody
+who never gave one; reporting a station's own failure as a refusal attributes to a controller a
+decision they did not take. Every non-success event MUST carry the `reason` the consumer will see,
+and the envelope MUST repeat it.
+
+## Cancellation ## {#outcomes-cancel}
+
+`POST /visits/{visitId}/cancel` withdraws a visit: on approval timeout, on the run's *FailRun*
+reaction, on a person stopping the run, at the budget deadline, or on replanning. A queued or
+pending visit ends immediately and the station emits `negotiation.withdrawn`; a running visit stops
+at its next checkpoint and the station emits `visit.cancelled`; either ends **TimedOut**. A visit
+already in a terminal state is unaffected, and the station answers `200` with its current status.
+
+## Revocation ## {#outcomes-revocation}
+
+A controller may take an agreement out of force while a visit under it is queued or running. The
+station MUST stop at its next checkpoint and emit `visit.revoked`, carrying the controller's
+reason verbatim and **naming the agreement**, because a Handler applying the run's `onRevoked`
+reaction needs it: outputs already derived from a revoked visit fall under that agreement's
+duties. A visit that arrives **afterwards** presenting a revoked agreement was never running and
+is **Refused** at PEP 2, not Revoked; reporting it as Revoked would fire the run's `onRevoked`
+over a visit that never began.
+
+# Messages # {#messages}
+
+The three message types are JSON Schemas [[!JSON-SCHEMA]] in [[#artefacts]]; the tables here
+describe them and the conditional rules each schema enforces. Members marked ✱ are required.
+
+## Visit descriptor ## {#descriptor}
+
+The <dfn export>visit descriptor</dfn> is what a Handler hands to a station to start one visit.
+It is pushed to `POST /visits` or pulled by the station from the Handler's pending list — the same
+object either way.
+
+<table class="data">
+  <thead><tr><th>Member<th>Type<th>Meaning
+  <tbody>
+  <tr><td>`protocol` ✱<td>IRI<td>`https://w3id.org/fdt/visit-protocol/v1`.
+  <tr><td>`visit` ✱<td>IRI<td>The `fdt-run:Visit`, minted by the Handler; the idempotency key.
+  <tr><td>`run` ✱, `plan` ✱<td>IRI<td>The run and the `fdt-run:Plan` the visit is part of. A station may dereference the redacted plan for a visit it holds (<a href="#handler-plan">Handler API</a>).
+  <tr><td>`hop` ✱, `phase` ✱<td>integer ≥ 1<td>The visit's position in the itinerary.
+  <tr><td>`attempt`<td>integer<td>Retries reuse the visit IRI and increment this.
+  <tr><td>`precededBy`<td>IRI[]<td>Visits whose results led to this one. MUST name `handOver.fromVisit` where a hand-over is carried.
+  <tr><td>`network`<td>IRI<td>The FDT network the visit runs under; the station evaluates the controller's offers for this network only.
+  <tr><td>`consumer`<td>object<td>`party` ✱ — the accountable legal party (`odrl:assignee`); `agent` — the person or service acting, as this descriptor claims; `handler` — the Handler instance; `presentation` — the credential presentation of [[#presentation-message]], verbatim; `exchangedToken` — an RFC 8693 exchanged token where the network's identity provider performs the exchange. A descriptor carrying `exchangedToken` MUST carry `presentation`; a descriptor's `presentation` MUST NOT carry `assurance` or `exchange` ([[#security-credential]]).
+  <tr><td>`train` ✱<td>object<td>`iri` ✱ — the `fdt-o:Train` in a depot catalogue; `type` ✱ — the concrete train class; `mechanism` ✱ — the interaction mechanism the station must support; `version`; `coordination` — `Orchestrated` or `Choreographed`.
+  <tr><td>`payload` ✱<td>object<td>`mediaType` ✱; `digest` ✱ — MUST equal the `fdt-o:artifactDigest` in the train's depot offer; and exactly one of `content` (inline, UTF-8) or `url` (where to fetch it; the station verifies the digest).
+  <tr><td>`parameters`<td>object[]<td>Each `name` ✱ and `value` ✱, optionally the declared `parameter` IRI. Values are the train's declared parameters and are passed to the adapter unchanged.
+  <tr><td>`negotiation` ✱<td>object<td>Exactly one of `request` — an `odrl:Request` as JSON-LD — or `agreement` — the IRI of an existing active agreement.
+  <tr><td>`target`<td>IRI<td>The hosted dataset, part or service the visit is about; also the request's `odrl:target`.
+  <tr><td>`onward` ✱<td>object<td>`allowedClasses` ✱ — classes of state the plan expects to leave; `destination` ✱ — `handler`, `train` or `linkage`; `linkageStation`, `joinKey`; `outputSchema` — the JSON Schema the train's declared output conforms to.
+  <tr><td>`handOver`<td>object (closed)<td>`fromVisit` ✱, `fromStation` ✱, `stateClass` ✱ (`Aggregate` or `Pseudonym`), `url` ✱ (`https` only), `mediaType` ✱, `digest` ✱, `bytes`, `joinKey`, `conformsTo`, `duties`. See [[#inbound]].
+  <tr><td>`reporting` ✱<td>object<td>`mode` ✱ — `callback` or `poll`; `callbackUrl` and `callbackToken` for callback.
+  <tr><td>`deadline`<td>date-time<td>The run's budget deadline; after it the Handler withdraws the visit.
+  <tr><td>`approvalWait`<td>`xsd:dayTimeDuration`<td>How long the Handler waits in pending approval before withdrawing. Days to seconds, never months: the value is the moment a controller's pending case is withdrawn, and a month is 28 to 31 days depending on when it started.
+  <tr><td>`labels`<td>object<td>Free-form, shown in consoles.
+</table>
+
+Conditional rules the schema enforces: a descriptor carrying `handOver` MUST carry a non-empty
+`precededBy` and its request MUST contain a permission for `fdt-p:acceptHandOver`; a descriptor
+carrying `exchangedToken` MUST carry `presentation`; a Handler MUST NOT grade its own presentation.
+
+<div class="example" id="ex-descriptor">
+  The descriptor of hop 1 of the gene–disease run — the published fixture `visit-descriptor-gd-m1.json`.
+  <pre class="include-code">
+  path: examples/visit-descriptor-gd-m1.json
+  highlight: json
+  </pre>
+</div>
+
+## Visit event ## {#event}
+
+A <dfn export>visit event</dfn> is one progress or compliance event of a visit, emitted by the
+station at every checkpoint decision and state change.
+
+<table class="data">
+  <thead><tr><th>Member<th>Type<th>Meaning
+  <tbody>
+  <tr><td>`id` ✱<td>IRI<td>Globally unique, minted by the station.
+  <tr><td>`visit` ✱, `run`, `station`<td>IRI<td>What the event is about and who emitted it.
+  <tr><td>`sequence` ✱<td>integer<td>Monotonic per visit and attempt.
+  <tr><td>`attempt`<td>integer<td>
+  <tr><td>`time` ✱<td>date-time<td>The station's time.
+  <tr><td>`type` ✱<td>enum<td>One of the types in the table below.
+  <tr><td>`state` ✱<td>enum<td>The `fdt-run:VisitState` after this event: `Queued`, `Checking`, `PendingApproval`, `Running`, `Inspecting`, `Delivered`, `Skipped`, `Refused`, `TimedOut`, `Rejected`, `Failed`, `Revoked`.
+  <tr><td>`checkpoint`<td>enum<td>`PEP1`, `NEG`, `PEP2`, `EXEC`, `PEP3`, `OBL`.
+  <tr><td>`agreement`<td>IRI<td>
+  <tr><td>`progress`<td>number 0–1<td>For `visit.progress`.
+  <tr><td>`message`<td>string<td>One sentence for consoles.
+  <tr><td>`reason`<td>string<td>For refused, rejected, failed, revoked: the stated reason shown to the consumer. On `visit.revoked` it is the **controller's** reason.
+  <tr><td>`justification`<td>object<td>`decision` — `permit`, `deny`, `permit-with-duties` or `redact`; `rule`; `offer`; `agreement`; `stationPolicy`; `evidence` — never record-level content; `duties`.
+  <tr><td>`approval`<td>object (closed)<td>For `negotiation.pending-approval`: `controller` ✱, `expiresAt`, `mode`, `rule`, `recommendation` (`grant` or `refuse`), `missing`, `assumedRegime` ([[#negotiation-outcome]]).
+  <tr><td>`resultUrl`<td>URL<td>For `visit.delivered` under poll reporting.
+  <tr><td>`dsp`<td>object<td>The equivalent Dataspace Protocol state, informative ([[#dsp]]).
+  <tr><td>`requester`<td>[=presentation=]<td>Who the visit was dispatched by, as presented, graded by the station.
+</table>
+
+<table class="data">
+  <thead><tr><th>Checkpoint<th>Event types<th>State after
+  <tbody>
+  <tr><td>PEP 1<td>`visit.received` · `visit.rejected`<td>Checking · Rejected
+  <tr><td>NEG<td>`negotiation.requested` · `negotiation.matched` · `negotiation.pending-approval` · `negotiation.awaiting-signature` · `negotiation.active` · `negotiation.refused` · `negotiation.withdrawn`<td>Checking · PendingApproval · Checking · Checking · Refused · TimedOut
+  <tr><td>PEP 2<td>`visit.queued` · `visit.rejected` · `visit.revoked`<td>Queued · Rejected · Revoked
+  <tr><td>EXEC<td>`visit.running` · `visit.progress` · `visit.failed` · `visit.cancelled` · `visit.revoked`<td>Running · Running · Failed · TimedOut · Revoked
+  <tr><td>PEP 3<td>`visit.inspecting` · `visit.delivered` · `visit.rejected`<td>Inspecting · Delivered · Rejected
+  <tr><td>OBL<td>`obligation.scheduled` · `obligation.fulfilled`<td>unchanged
+</table>
+
+Conditional rules the schema enforces: `negotiation.refused` and `visit.rejected` MUST carry
+`reason` and `justification`; `visit.failed` and `visit.revoked` MUST carry `reason`;
+`visit.revoked`, `negotiation.awaiting-signature` and `negotiation.active` MUST name the
+`agreement`; `negotiation.pending-approval` MUST carry `approval`; `negotiation.matched` and
+`visit.delivered` MUST carry `justification`; `visit.received` and `visit.rejected` MUST carry
+`requester`; and a terminal event MUST announce its own state — `negotiation.refused` → `Refused`,
+`visit.rejected` → `Rejected`, `visit.delivered` → `Delivered`, `visit.failed` → `Failed`,
+`visit.revoked` → `Revoked`.
+
+Note: `justification.decision` has no value for *nothing was decided*. A `visit.failed` at NEG —
+the controller granted and the station broke before it could act — carries `deny` today, the same
+word as a refusal, and `type` and `state` are what tell the two apart. Whether the field describes
+what the rules said or what happened to the visit, and therefore whether the enumeration is short
+by one value or two, is open (Q127).
+
+<div class="example" id="ex-events">
+  The event stream of the same visit under push dispatch — `visit-events-gd-m1.json`. Nine events; nothing ran between the fourth and the fifth.
+  <pre class="include-code">
+  path: examples/visit-events-gd-m1.json
+  highlight: json
+  </pre>
+</div>
+
+<div class="example" id="ex-events-poll">
+  The same visit under poll dispatch — `visit-events-gd-m1-poll.json`. Eight events: no `negotiation.awaiting-signature`, and `negotiation.active` states the route the exchange took.
+  <pre class="include-code">
+  path: examples/visit-events-gd-m1-poll.json
+  highlight: json
+  </pre>
+</div>
+
+## Visit-result envelope ## {#result-envelope}
+
+The <dfn export>visit-result envelope</dfn> is what a station returns for one visit after result
+inspection. The same object is the evaluation scope over which a Handler evaluates a plan's
+conditions (ADR-025), so a Handler evaluates phase conditions and next-hop selectors directly on
+what arrives.
+
+<table class="data">
+  <thead><tr><th>Member<th>Type<th>Meaning
+  <tbody>
+  <tr><td>`visit` ✱, `station` ✱, `train` ✱<td>IRI<td>
+  <tr><td>`hop` ✱, `phase` ✱, `attempt`<td>integer<td>
+  <tr><td>`run`, `protocol`<td>IRI<td>
+  <tr><td>`agreement`<td>IRI<td>Required when delivered, and when rejected at PEP 3.
+  <tr><td>`state` ✱<td>enum<td>`delivered`, `skipped`, `refused`, `timed-out`, `rejected`, `failed`, `revoked` — the outcome, in the envelope's spelling.
+  <tr><td>`checkpoint`<td>enum<td>Where the terminal decision was taken. Required for every outcome but `delivered`.
+  <tr><td>`deliveredAt`<td>date-time<td>Required when delivered.
+  <tr><td>`inspection`<td>object<td>`outcome` ✱ — `passed`, `redacted` or `rejected`; `onwardStateClass`; `outputSchema` — the schema PEP 3 validated against; `justification` — in words a controller can read. Required when delivered and when rejected at PEP 3.
+  <tr><td>`result` ✱<td>object<td>The train's declared aggregate output, conforming to `inspection.outputSchema`. MUST be empty under any outcome but `delivered`.
+  <tr><td>`skipCause`<td>enum<td>`NotSelected`, `NotEvaluated`, `Pruned`, `Dropped`. Required when skipped.
+  <tr><td>`reason`<td>string<td>The stated reason for a non-success outcome. Required for every outcome but `delivered`.
+  <tr><td>`events`<td>URL<td>Where the full event stream can be read.
+  <tr><td>`artifacts`<td>object[]<td>Files released by PEP 3: `name` ✱, `mediaType` ✱, `digest` ✱, `bytes` ✱, `url` (`https` only — a location, never a container), `inline` (the honest way to put content in an envelope), `conformsTo`. Never record-level.
+  <tr><td>`onward`<td>object<td>`stateClass` ✱ (`Aggregate`, `Pseudonym`, `None`), `destination` ✱, `linkageStation`, `joinKey`, `handedOverDigest`, `duties`.
+  <tr><td>`routing`<td>object<td>Choreography only: `nextStations`, `carriedState` (digest), `carriedStateClass`.
+  <tr><td>`obligations`<td>object[]<td>Post-execution duties the station scheduled and the consumer must honour: `duty` ✱, `dueAt`, `agreement`.
+  <tr><td>`provenance`<td>URL<td>The PROV-O [[PROV-O]] record of this visit.
+  <tr><td>`requester`<td>[=presentation=]<td>Who the visit was dispatched by, as presented.
+</table>
+
+Conditional rules the schema enforces: a delivered visit carries `agreement`, `deliveredAt` and
+`inspection`; a result rejected at PEP 3 carries `agreement` and `inspection`; every non-success
+outcome carries `reason`; a skipped visit carries `skipCause` and `reason`; only a delivered visit
+carries a result; a visit that did not deliver says where it ended.
+
+<div class="example" id="ex-result">
+  The envelope of the same visit — `visit-result-gd-m1.json`. Five cells, the smallest counting 14 subjects against a duty requiring 5; the numbers came out of the query, not out of prose.
+  <pre class="include-code">
+  path: examples/visit-result-gd-m1.json
+  highlight: json
+  </pre>
+</div>
+
+## Presentation ## {#presentation-message}
+
+The <dfn export>presentation</dfn> records what a component saw of the credential a visit was
+dispatched under, **verbatim** — because a component that normalised every form into "the agent"
+would write down something nobody said, and which form was presented is often what an audit is
+about. One schema, recorded in the descriptor, every event and the envelope.
+
+<table class="data">
+  <thead><tr><th>Member<th>Meaning
+  <tbody>
+  <tr><td>`form` ✱<td>`organisation-credential` — the subject is the party and the credential names the human agent acting for it (RFC 8693's `act.sub`); `person-credential` — the subject is the person and a named federation claim relates them to a party; `configured-credential` — configured out of band (development deployments); `no-credential` — authentication switched off; `credential-not-read` — the visit was turned away before any credential could be read.
+  <tr><td>`party`, `agent`, `affiliation`, `issuer`<td>The legal party bound, the person or service that acted, the affiliation's value and who signed the credential.
+  <tr><td>`affiliationClaim`<td>For a person's credential, **which claim** the affiliation was read from — required, because the claim's name is a deployment's configuration and not pinned by this protocol (Q30), and two deployments reading two different claims must be distinguishable in the first record either writes.
+  <tr><td>`assurance`<td>Set by the **station only**: `presented-only` or `presented-and-verified` ([[#security-credential]]).
+  <tr><td>`exchange`<td>What a verified exchanged token established and nothing else: `issuer`, `subject`, `actor`. Closed.
+  <tr><td>`assuranceNote`, `note`<td>Why the weaker state applies; why a degenerate form was accepted.
+</table>
+
+## VisitStatus and Problem ## {#status-problem}
+
+A <dfn export>VisitStatus</dfn> is the station's answer to a push, a replay, a cancellation, a
+signature and `GET /visits/{visitId}`: `visit` ✱, `attempt`, `state` ✱, `agreement`, `sequence` ✱
+(of the latest event), `approval` (`controller`, `expiresAt`), `progress`, `events` and `result`
+URLs, and `reason` for a non-success outcome.
+
+A <dfn export>Problem</dfn> is an RFC 9457 problem details object [[!RFC9457]] — `type` ✱,
+`title` ✱, `status` ✱, `detail`, `instance` — extended with the FDT `outcome` (`Refused`,
+`Rejected` or `Failed`), the `checkpoint`, and the `justification`. A station answering with a
+Problem MUST put the same outcome word in it that the visit's terminal event carries.
+
+## Signature messages ## {#signature-messages}
+
+An <dfn export>AgreementSignature</dfn> (posted by the Handler to a push-dispatch station) and a
+<dfn export>PartySignature</dfn> (carried in both directions of the poll-dispatch exchange) are
+one construction: `signedBy` ✱, `onBehalfOf` (present exactly when it differs from `signedBy`),
+`keyId` ✱, `algorithm` ✱ (`EdDSA`), `signedDigest` ✱ (`sha256:` + 64 hex), `value` ✱ (base64url,
+unpadded). **Neither carries a role**: the endpoint or the position in the exchange fixes it, and
+a role a sender could choose would let the party holding the pen present the other side's
+signature as its own.
+
+A <dfn export>CountersignatureRequest</dfn> is what a poll-dispatch station sends: `agreement` ✱
+(IRI), `document` ✱ (`mediaType` ✱ — `application/n-quads` in canonical form or `text/turtle` —
+and `content` ✱, the serialised graph), and `assignerSignature` ✱. A <dfn export>Countersignature</dfn>
+is the answer: `agreement` ✱ and `signature` ✱. A <dfn export>CountersignatureRefused</dfn>
+carries `reason` ✱ from the four words of [[#negotiation-signatures-refusals]] and a `detail`.
+
+<div class="example" id="ex-countersign">
+  The poll-dispatch exchange for the same agreement — `poll-countersign-ask-gd-m1.json` (the document's N-Quads abbreviated here only in prose; the fixture is complete) and `poll-countersign-answer-gd-m1.json`.
+  <pre class="include-code">
+  path: examples/poll-countersign-answer-gd-m1.json
+  highlight: json
+  </pre>
+</div>
+
+## Redacted plan ## {#redacted-plan}
+
+The redacted plan a station may read for a visit it holds (<a href="#handler-plan">Handler API</a>) shows the run's
+**structure in full and never another station's identity**: `plan` ✱, `visit` ✱, `pattern` ✱,
+`coordination` ✱, `phases` ✱, `failurePolicy` ✱, `stateCarriage`, `budget`, `stopCondition`,
+`intendedStationCount` ✱ — the count is disclosed, the list is not, in any form — `branch` ✱ (this
+station's own, with nothing withheld) and `redaction` ✱, by which the document says of itself what
+it is not and that it is the Handler's unverified account (ADR-047).
+
+# Station API # {#station-api}
+
+Normative definition: `station-visit-api.yaml` ([[#artefacts]]). Base path: the station's dispatch
+endpoint. Authentication: [[#security]].
+
+<table class="data">
+  <thead><tr><th>Operation<th>Purpose<th>Responses
+  <tbody>
+  <tr><td>`GET /`<td>Self-description (JSON-LD): type, mechanisms, memberships, dispatch modes, protocol versions, links to metadata and catalogue.<td>200
+  <tr><td>`GET /catalogue`<td>The DCAT catalogue — datasets, parts, offers, distributions, what each conforms to. Publishing it grants nothing.<td>200 (Turtle, JSON-LD) · 406
+  <tr><td>`GET /shapes`<td>The SHACL shapes the station's data conforms to — what makes station selection answerable.<td>200 · 406
+  <tr><td>`POST /visits`<td>Push a visit ([[#dispatch-push]]). Body: [=visit descriptor=].<td>202 + `Location` · 200 (replay) · 400 Rejected · 401 · 403 Refused · 409 · 415
+  <tr><td>`GET /visits/{visitId}`<td>Current [=VisitStatus=].<td>200 · 404
+  <tr><td>`GET /visits/{visitId}/events`<td>Ordered events with `sequence` > `after`; SSE with `Accept: text/event-stream`.<td>200
+  <tr><td>`GET /visits/{visitId}/result`<td>The [=visit-result envelope=] once terminal.<td>200 · 409 not yet terminal
+  <tr><td>`GET /visits/{visitId}/artifacts/{name}`<td>An artefact released by PEP 3; `Digest` header carries its SHA-256.<td>200
+  <tr><td>`POST /visits/{visitId}/cancel`<td>Withdraw or stop ([[#outcomes-cancel]]). Body: `reason` ✱, `cause`.<td>200 current status
+  <tr><td>`POST /visits/{visitId}/agreement/signature`<td>The assignee signs ([[#negotiation-signatures-exchange]], push shape). Body: [=AgreementSignature=].<td>200 active and queued · 404 nothing awaiting a signature · 409 already signed · 422 refused, naming which of the four
+  <tr><td>`GET /agreements/{agreementId}`<td>An agreement the caller is party to, as JSON-LD or Turtle, with a `Digest` header; read-only.<td>200 · 403 · 404
+</table>
+
+`visitId` is the URL-safe form of the visit IRI; percent-encoding of the full IRI is the default
+and a station documents its encoding.
+
+# Handler API — the station-facing surface # {#handler-api}
+
+Normative definition: `handler-callback-api.yaml` ([[#artefacts]]). This document is defined by its
+**audience**: everything a station reads or writes at a Handler is declared here, and nothing a
+consumer's console reads is — a station operator must never be able to see a whole run, because a
+run is other controllers' decisions about other people's data. Everything here is reachable with
+the per-visit callback token or the station operator's own credential and is scoped to one
+station's own traffic.
+
+<table class="data">
+  <thead><tr><th>Operation<th>Purpose<th>Responses
+  <tbody>
+  <tr><td>`GET /stations/{stationId}/pending-visits`<td>Poll dispatch: the descriptors waiting for this station; `wait` long-polls up to 60 s.<td>200 (possibly empty)
+  <tr><td>`POST /visits/{visitId}/ack`<td>The station has taken the visit. Body: the first event or a Problem.<td>204 · 409 withdrawn meanwhile — do not start
+  <tr><td>`POST /visits/{visitId}/events`<td>Push one or more events; at-least-once.<td>204 · 404 · 410 withdrawn — stop at the next checkpoint
+  <tr><td>`PUT /visits/{visitId}/result`<td>Deliver the envelope; idempotent per visit and attempt.<td>204 · 422 does not conform (record-level content, missing outcome or reason)
+  <tr><td>`PUT /visits/{visitId}/artifacts/{name}`<td>Upload an artefact (poll mode); digest verified against the envelope.<td>204 · 409 digest mismatch
+  <tr><td id="handler-plan">`GET /visits/{visitId}/plan`<td>The redacted plan for this visit ([[#redacted-plan]]).<td>200 · 403 caller does not hold this visit · 404
+  <tr><td>`POST /visits/{visitId}/agreement`<td>Poll-dispatch signature exchange: the station hands over the agreement it derived and signed; the Handler signs the other side in the same response. Body: [=CountersignatureRequest=].<td>201 [=Countersignature=] · 404 · 409 already countersigned · 422 [=CountersignatureRefused=]
+</table>
+
+# Security # {#security}
+
+## Credentials ## {#security-credential}
+
+Version 1 uses OpenID Connect bearer tokens [[!OPENID-CONNECT-CORE]]. A station MUST verify a
+visit's token against the identity providers it trusts **for the visit's network** (ADR-017), and
+MUST answer `401` — not an outcome word — when the token is missing or untrusted, since nothing has
+been decided about a caller whose identity was not established.
+
+**The Handler visits under its own credential** (ADR-044). Nothing forwards a consumer's credential
+to a station: a token minted for a Handler's audience and presented to a station would be a
+confused deputy. Who *dispatched* the run reaches the station two ways, and the station records
+which it got:
+
+* the descriptor's `consumer.presentation` carries the credential presentation of [[#presentation-message]] verbatim, and is **always** there;
+* where the network's identity provider performs RFC 8693 token exchange [[!RFC8693]], the descriptor also carries `consumer.exchangedToken`, which the station verifies against the network's trusted issuer and which ties the visit cryptographically to the person named. An exchanged token establishes which person dispatched the run — the token's subject and actor — and **nothing else**; a station MUST NOT treat any further claim in it as evidence in the negotiation and MUST NOT record one.
+
+A station MUST record which of the two it got in every event's `requester.assurance` —
+`presented-and-verified`, with the `exchange` it established, or `presented-only`. Grading is the
+station's act and nobody else's: a descriptor whose `presentation` carries `assurance` or
+`exchange` MUST be rejected, because a Handler writing *verified* about a credential presented to it
+would be certifying its own assertion. A network without exchange is recorded, not broken, and a
+console MUST render the two states as two states.
+
+Callbacks use the per-visit capability token in the descriptor. A poll-dispatch station
+authenticates at the Handler with the OIDC client credentials of its operator, trusted by the
+Handler for the network.
+
+## Transport and integrity ## {#security-transport}
+
+All traffic between the parties MUST be over TLS, and the schemas say so wherever a location is
+written down: `handOver.url` and `artifacts[].url` are `https` only. Integrity is by `sha256:`
+digests end to end — the train's offer, the descriptor, the arrival check, the agreement's three
+pins, the released artefacts and the hand-over. Signing keys are published as JWK sets by their
+owners and distributed out of band ([[#negotiation-signatures-refusals]]).
+
+Version 2 is planned to replace bearer tokens with credential presentations and to bind
+negotiation to the Dataspace Protocol ([[#dsp]]).
+
+# Relationship to the Dataspace Protocol # {#dsp}
+
+*This section is non-normative.*
+
+The agreement and visit lifecycles map onto the Dataspace Protocol's Contract Negotiation and
+Transfer Process [[DSP]]; in version 1 the mapping is documentation and a version 2 binding would
+implement it (ADR-019). The mapping is **lossy in one place and the loss must not survive the
+crossing**: DSP ends badly in exactly one way — `TERMINATED` with a reason — while this protocol
+distinguishes Refused, Rejected, TimedOut, Failed and Revoked and keeps Skipped outside the protocol
+altogether. A binding carries this protocol's outcome word in every `TERMINATED` reason, verbatim;
+a binding that emits `TERMINATED` without it has implemented the part of the mapping that DSP could
+express.
+
+<table class="data">
+  <thead><tr><th>Agreement state<th>DSP Contract Negotiation
+  <tbody>
+  <tr><td>`requested`<td>REQUESTED
+  <tr><td>`matched`<td>OFFERED, or straight to AGREED (there are no counter-offers)
+  <tr><td>`pending approval`<td>a provider-side wait before AGREED; DSP has no state for a person deciding
+  <tr><td>`awaiting signature`<td>AGREED — the provider has sent the agreement and the consumer has not yet verified
+  <tr><td>`active`<td>VERIFIED → FINALIZED
+  <tr><td>never concluded<td>TERMINATED, carrying Refused, TimedOut or Rejected as the case is
+  <tr><td>`suspended`, `revoked`, `expired`, `fulfilled`<td>after FINALIZED; DSP 2025-1 does not model them, and revocation after FINALIZED is a gap to raise
+</table>
+
+<table class="data">
+  <thead><tr><th>Visit state<th>DSP Transfer Process
+  <tbody>
+  <tr><td>Queued, Checking, PendingApproval<td>REQUESTED (SUSPENDED if already started)
+  <tr><td>Running, Inspecting<td>STARTED
+  <tr><td>Delivered<td>COMPLETED
+  <tr><td>Refused, Rejected, TimedOut, Failed, Revoked<td>TERMINATED, reason carrying the word
+  <tr><td>Skipped<td>no Transfer Process is ever created: nothing was requested of this station
+</table>
+
+Not covered by DSP and therefore this protocol's own: progress and compliance events, checkpoint
+decisions and justifications, pending approval, onward-state hand-over and provenance.
+
+# Open points # {#open}
+
+*This section is non-normative.*
+
+The following are recorded in the reference implementation's question register with a default
+every implementation follows until the question is decided.
+
+* **Q27** — what outcome a station records when the assignee never signs. Default: none; the visit rests until withdrawn ([[#negotiation-signatures-unsigned]]).
+* **Q61** — whether a network's trust anchors may vouch for a station's signing key, instead of out-of-band configuration. Default: configuration; `UnknownKey` otherwise.
+* **Q114** — whether onward state needs a permission of its own or travels on the permission for the action that produced it; an agreement with no `fdt-p:deliverResult` permission admits nothing and constrains nothing, and PEP 3's class check then passes vacuously.
+* **Q127** — whether `justification.decision` describes what the rules said or what happened to the visit ([[#event]]).
+* **Q130 / Q133** — whether a station that cannot verify a hand-over's bytes must refuse at PEP 1 or may run and report the result unverifiable.
+* **Q135** — a hop with two inputs: one `handOver` per descriptor today; `precededBy` can name both.
+* **Q136** — who may fetch a hand-over from the station that holds it, under which credential, and how long the artefact lives.
+* **Draft 2** — a JSON-LD context for descriptors and events; the exact SSE framing; artefact size limits and resumable downloads; a self-description vocabulary for dispatch modes and protocol version; station-to-station forwarding; the DSP binding.
+
+<h2 class="no-num" id="examples">Appendix A: Examples</h2>
+
+*This appendix is non-normative.*
+
+Every example in this document is a published fixture of `fdt-commons`, copied verbatim from the
+commit named in [[#artefacts]]; the reference implementation's validators check each against its
+schema and the station's and Handler's test suites run against them. The parties in them are
+fictional. Besides those shown inline: `visit-events-gd-m1-refused.json` and
+`visit-result-gd-m1-refused.json` (a controller's refusal — five events, ending `Refused` with the
+controller's words), `visit-events-gd-m1-failed.json` and `visit-result-gd-m1-failed.json` (a
+station that broke after a grant — the same five events, ending `Failed`, and the collision Q127
+is about), `visit-descriptor-ttg-hop3.json` (a descriptor carrying a hand-over, with the lineage
+rule of [[#inbound]] satisfied) and `poll-countersign-ask-gd-m1.json` (the full
+CountersignatureRequest, document included).
+
+<div class="example" id="ex-refused">
+  The envelope of a refused visit — `visit-result-gd-m1-refused.json`: an empty `result`, the outcome, where it ended, and the controller's reason verbatim.
+  <pre class="include-code">
+  path: examples/visit-result-gd-m1-refused.json
+  highlight: json
+  </pre>
+</div>
+
+<h2 class="no-num" id="artefacts">Appendix B: Normative artefacts</h2>
+
+The following artefacts in `fdt-commons` [[FDT-COMMONS]] are normative for this version, pinned
+to commit `eaa339c1c6749997bf93fe00bf9cc967291ce3cb` (`VERSION` 0.75.0). Where this document and an
+artefact disagree, the artefact governs and this document has an error to be reported.
+
+<table class="data">
+  <thead><tr><th>Artefact<th>Identifier<th>Location
+  <tbody>
+  <tr><td>Visit descriptor<td>`https://w3id.org/fdt/schemas/visit-descriptor.schema.json`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/schemas/visit-descriptor.schema.json">`schemas/visit-descriptor.schema.json`</a>
+  <tr><td>Visit event<td>`https://w3id.org/fdt/schemas/visit-event.schema.json`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/schemas/visit-event.schema.json">`schemas/visit-event.schema.json`</a>
+  <tr><td>Visit-result envelope<td>`https://w3id.org/fdt/schemas/visit-result.schema.json`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/schemas/visit-result.schema.json">`schemas/visit-result.schema.json`</a>
+  <tr><td>Presentation<td>`https://w3id.org/fdt/schemas/presentation.schema.json`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/schemas/presentation.schema.json">`schemas/presentation.schema.json`</a>
+  <tr><td>Redacted plan<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/schemas/redacted-plan.schema.json">`schemas/redacted-plan.schema.json`</a>
+  <tr><td>Station API<td>OpenAPI 3.1 [[OPENAPI]], `1.1.0-draft.1`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/protocol/openapi/station-visit-api.yaml">`protocol/openapi/station-visit-api.yaml`</a>
+  <tr><td>Handler API, station-facing<td>OpenAPI 3.1, `1.1.0-draft.1`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/protocol/openapi/handler-callback-api.yaml">`protocol/openapi/handler-callback-api.yaml`</a>
+  <tr><td>ODRL profile and shapes<td>`https://w3id.org/fdt/profile`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/vocab/fdt-profile.ttl">`vocab/fdt-profile.ttl`</a>, <a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/shapes/policy.shapes.ttl">`shapes/policy.shapes.ttl`</a> (`fdts:RequestShape`, `fdts:AgreementShape`, `fdts:SignatureShape`)
+  <tr><td>Run vocabulary<td>`https://w3id.org/fdt/run#`<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/vocab/fdt-run.ttl">`vocab/fdt-run.ttl`</a>
+  <tr><td>Agreement derivation (rule and checker)<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/protocol/agreement-derivation.md">`protocol/agreement-derivation.md`</a>, `tools/derivation.py`
+  <tr><td>Result inspection (rule and checker)<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/protocol/result-inspection.md">`protocol/result-inspection.md`</a>, `tools/inspection.py`
+  <tr><td>Dispatch credential<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/protocol/dispatch-credential.md">`protocol/dispatch-credential.md`</a>
+  <tr><td>Canonical form<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/tools/canonical.py">`tools/canonical.py`</a>, cross-checked against the RDF Dataset Canonicalization reference implementation
+  <tr><td>DSP mapping<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/blob/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/mapping/state-machines.md">`mapping/state-machines.md`</a>
+  <tr><td>Fixtures<td>—<td><a href="https://github.com/FAIRDataTeam/fdt-commons/tree/eaa339c1c6749997bf93fe00bf9cc967291ce3cb/examples/protocol">`examples/protocol/`</a>
+</table>
+
+The `https://w3id.org/fdt/…` identifiers are the names these artefacts carry in the contracts.
+Their redirects are not yet published; until they are, the locations above are where the artefacts
+resolve.
+
+<h2 class="no-num" id="changes">Appendix C: Change history</h2>
+
+*This appendix is non-normative.*
+
+: 16 October 2026 — version 1, editors' draft
+:: First publication as a specification, written against `fdt-commons` 0.75.0 and the running
+    reference implementation. Relative to the draft-1 protocol note of 12 September 2026 inside
+    `fdt-commons`: both parties sign the agreement (ADR-038) and the exchange has a poll-dispatch
+    shape (Q52); the dispatch credential is graded (ADR-044); a station may read the redacted plan
+    (ADR-047); hand-over has an inbound direction, named by location and digest (Q124), with the
+    lineage rule and `https`-only locations; the agreement lifecycle has an `awaiting signature`
+    state; and the derivation rule binds the agreement's parties to the offer's and the request's.

@@ -1,0 +1,153 @@
+{
+  "protocol": "https://w3id.org/fdt/visit-protocol/v1",
+  "visit": "https://example.org/fdt/visit/q3-v3",
+  "run": "https://example.org/fdt/run/ttg-2026q3-01",
+  "plan": "https://example.org/fdt/plan/time-to-groin-oost",
+  "hop": 3,
+  "phase": 2,
+  "attempt": 1,
+  "precededBy": [
+    "https://example.org/fdt/visit/q3-v1",
+    "https://example.org/fdt/visit/q3-v2"
+  ],
+  "network": "https://example.org/fdt/net/stroke-oost",
+  "consumer": {
+    "party": "https://example.org/fdt/party/stroke-network-oost-qi",
+    "agent": "r.bakker@stroke-oost.example",
+    "handler": "https://handler.stroke-oost.example/fdt/v1",
+    "presentation": {
+      "form": "person-credential",
+      "agent": "https://example.org/fdt/person/qi-lead",
+      "affiliation": "https://example.org/fdt/party/stroke-network-oost-qi",
+      "affiliationClaim": "affiliation",
+      "issuer": "https://idp.example.org/surfconext-like"
+    }
+  },
+  "train": {
+    "iri": "https://example.org/fdt/train/time-to-groin",
+    "type": "https://w3id.org/fdt/fdt-o#DockerTrain",
+    "mechanism": "https://w3id.org/fdt/instances#Docker",
+    "version": "0.4",
+    "coordination": "Orchestrated"
+  },
+  "payload": {
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:9290f98b24250b885624bea7ad2bfb02ad17dbdd4a50133714f5ca922bce7b65",
+    "url": "oci://depot.stroke-oost.example/trains/time-to-groin@sha256:9290f98b24250b885624bea7ad2bfb02ad17dbdd4a50133714f5ca922bce7b65"
+  },
+  "parameters": [
+    {
+      "name": "period",
+      "value": "2026-Q2",
+      "parameter": "https://example.org/fdt/param/ttg-period"
+    },
+    {
+      "name": "region",
+      "value": "https://example.org/regions/oost",
+      "parameter": "https://example.org/fdt/param/ttg-region"
+    },
+    {
+      "name": "hop_role",
+      "value": "ambulance-service",
+      "parameter": "https://example.org/fdt/param/ttg-hop-role"
+    }
+  ],
+  "negotiation": {
+    "request": {
+      "@context": "http://www.w3.org/ns/odrl.jsonld",
+      "@type": "Request",
+      "@id": "https://example.org/fdt/request/ttg-2026q3-hop3",
+      "profile": "https://w3id.org/fdt/profile",
+      "target": "https://example.org/fdt/dataset/rav-rides",
+      "assignee": "https://example.org/fdt/party/stroke-network-oost-qi",
+      "https://w3id.org/fdt/profile#train": {
+        "@id": "https://example.org/fdt/train/time-to-groin"
+      },
+      "https://w3id.org/fdt/profile#underNetwork": {
+        "@id": "https://example.org/fdt/net/stroke-oost"
+      },
+      "permission": [
+        {
+          "action": "https://w3id.org/fdt/profile#executeContainer",
+          "constraint": [
+            {
+              "leftOperand": "purpose",
+              "operator": "eq",
+              "rightOperand": {
+                "@id": "https://w3id.org/dpv#ResearchAndDevelopment"
+              }
+            },
+            {
+              "leftOperand": "https://w3id.org/fdt/profile#legalBasis",
+              "operator": "eq",
+              "rightOperand": {
+                "@id": "https://w3id.org/fdt/profile#ResearchDisclosureBW7-458"
+              }
+            }
+          ],
+          "@type": "Permission"
+        },
+        {
+          "action": "https://w3id.org/fdt/profile#acceptHandOver",
+          "constraint": [
+            {
+              "leftOperand": "https://w3id.org/fdt/profile#inboundStateClass",
+              "operator": "eq",
+              "rightOperand": {
+                "@id": "https://w3id.org/fdt/profile#Pseudonym"
+              }
+            }
+          ],
+          "@type": "Permission"
+        },
+        {
+          "action": "https://w3id.org/fdt/profile#carryOnward",
+          "constraint": [
+            {
+              "leftOperand": "https://w3id.org/fdt/profile#onwardStateClass",
+              "operator": "eq",
+              "rightOperand": {
+                "@id": "https://w3id.org/fdt/profile#Aggregate"
+              }
+            }
+          ],
+          "@type": "Permission"
+        }
+      ]
+    }
+  },
+  "target": "https://example.org/fdt/dataset/rav-rides",
+  "handOver": {
+    "fromVisit": "https://example.org/fdt/visit/q3-v2",
+    "fromStation": "https://example.org/fdt/station/linkage-oost",
+    "stateClass": "Pseudonym",
+    "url": "https://station.linkage-oost.example/fdt/v1/visits/q3-v2/artifacts/translation-oost-to-rav.json",
+    "mediaType": "application/json",
+    "digest": "sha256:3db80e1fa288f83260cb36be22cecfca42fb2c7d75d5da65a0b65c028bcabe8c",
+    "bytes": 4046,
+    "joinKey": "https://example.org/fdt/joinkey/pseudonym-space-rav",
+    "conformsTo": "https://w3id.org/fdt/schemas/translation-envelope.schema.json",
+    "duties": [
+      "no re-identification",
+      "delete results within 30 days"
+    ]
+  },
+  "onward": {
+    "allowedClasses": [
+      "Aggregate"
+    ],
+    "destination": "handler",
+    "outputSchema": "https://example.org/fdt/schemas/time-to-groin-output"
+  },
+  "reporting": {
+    "mode": "callback",
+    "callbackUrl": "https://handler.stroke-oost.example/fdt/v1/visits/q3-v3",
+    "callbackToken": "<per-visit capability token>"
+  },
+  "deadline": "2026-10-15T00:00:00Z",
+  "approvalWait": "P2D",
+  "labels": {
+    "plan": "Time-to-groin — region Oost, per quarter",
+    "run": "2026-Q3"
+  }
+}

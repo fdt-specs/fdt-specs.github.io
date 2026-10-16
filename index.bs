@@ -1,0 +1,457 @@
+<pre class="metadata">
+Title: FAIR Data Train — General Architecture
+Shortname: fdt-architecture
+Level: none
+Status: DREAM
+Text Macro: DOCSTATUS Editors' Draft
+Status Text: This is the editors' draft of version 0.2 of the FAIR Data Train general architecture. It is provided for discussion and may change at any moment; its publication does not imply endorsement of its contents by any organization, and it should be cited only as work in progress. It supersedes <a href="https://specs.fairdatatrain.org/v0.1/">version 0.1</a> (10 July 2025). Version 0.2 brings the architecture up to date with the running reference implementation and adds a companion specification, the <a href="https://specs.fairdatatrain.org/visit-protocol/">FAIR Data Train Visit Protocol</a>, which specifies the protocol between a Data Station and a Train Handler; what changed is summarised in <a href="#changes">§1.3</a>.
+URL: https://specs.fairdatatrain.org/
+Previous Version: https://specs.fairdatatrain.org/v0.1/
+!Latest version: <a href="https://specs.fairdatatrain.org/">https://specs.fairdatatrain.org/</a>
+!Date of the first draft: 14 December 2021
+Date: 2026-10-16
+Editor: Luiz Olavo Bonino da Silva Santos, University of Twente and Leiden University Medical Center, l.o.boninodasilvasantos@utwente.nl
+!Contributors: <a href="mailto:kees.burger@health-ri.nl">Kees Burger</a> (Health RI), <a href="mailto:RKaliyap@ITS.JNJ.com">Rajaram Kaliyaperumal</a> (Janssen Pharmaceuticals)
+!Feedback: <a href="mailto:l.o.boninodasilvasantos@utwente.nl?subject=%5Bfdt-spec%5D%20YOUR%20TOPIC%20HERE">l.o.boninodasilvasantos@utwente.nl</a>
+!Reference Implementation: <a href="https://github.com/FAIRDataTeam/FAIRDataTrain">FAIRDataTeam/FAIRDataTrain</a> · contracts: <a href="https://github.com/FAIRDataTeam/fdt-commons">fdt-commons</a> · ontology: <a href="https://github.com/FAIRDataTeam/FDT-O">FDT-O</a>
+!Companion specification: <a href="https://specs.fairdatatrain.org/visit-protocol/">FAIR Data Train — Visit Protocol</a>
+Issue Tracking: GitHub https://github.com/FAIRDataTeam/FAIRDataTrain/issues
+Repository: fdt-specs/fdt-specs.github.io
+Abstract: This document describes the general architecture of the FAIR Data Train (FDT): the roles and the components of an FDT ecosystem, how the components interact — trains travel to Data Stations and run there under agreements negotiated on arrival, behind policy checkpoints that decide what may leave — and the open standards each part is built on. It is the entry point to the FDT specifications; the protocol between a Data Station and a Train Handler is specified in the companion FDT Visit Protocol.
+Markup Shorthands: markdown yes, css no, idl no, dfn yes, biblio yes
+Local Boilerplate: header yes, status yes, copyright yes
+Complain About: missing-example-ids no
+</pre>
+
+<pre class="biblio">
+{
+  "FAIR-PRINCIPLES": {
+    "authors": ["Mark D. Wilkinson", "Michel Dumontier", "IJsbrand Jan Aalbersberg", "et al."],
+    "href": "https://doi.org/10.1038/sdata.2016.18",
+    "title": "The FAIR Guiding Principles for scientific data management and stewardship",
+    "publisher": "Scientific Data 3, 160018",
+    "date": "15 March 2016"
+  },
+  "FDP": {
+    "authors": ["FAIR Data Point Working Group"],
+    "href": "https://specs.fairdatapoint.org/",
+    "title": "FAIR Data Point specification",
+    "status": "Working Draft"
+  },
+  "FDT-VISIT-PROTOCOL": {
+    "authors": ["Luiz Olavo Bonino da Silva Santos"],
+    "href": "https://specs.fairdatatrain.org/visit-protocol/",
+    "title": "FAIR Data Train — Visit Protocol",
+    "status": "Editors' Draft",
+    "date": "16 October 2026"
+  },
+  "FDT-COMMONS": {
+    "authors": ["FAIR Data Team"],
+    "href": "https://github.com/FAIRDataTeam/fdt-commons",
+    "title": "fdt-commons — shared contracts of the FAIR Data Train ecosystem: vocabularies, SHACL shapes, JSON Schemas, OpenAPI documents and fixtures"
+  },
+  "FDT-O": {
+    "authors": ["FAIR Data Team"],
+    "href": "https://github.com/FAIRDataTeam/FDT-O",
+    "title": "FDT-O — the FAIR Data Train ontology"
+  },
+  "FDT-ADR": {
+    "authors": ["FAIR Data Team"],
+    "href": "https://github.com/FAIRDataTeam/FAIRDataTrain/tree/master/ReferenceImplementation/docs/adr",
+    "title": "FAIR Data Train — Architecture Decision Records"
+  },
+  "DSP": {
+    "authors": ["Eclipse Dataspace Working Group"],
+    "href": "https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1/",
+    "title": "Dataspace Protocol 2025-1",
+    "date": "2025"
+  },
+  "DPV": {
+    "authors": ["W3C Data Privacy Vocabularies and Controls Community Group"],
+    "href": "https://w3id.org/dpv",
+    "title": "Data Privacy Vocabulary (DPV)",
+    "status": "W3C Community Group Final Report"
+  },
+  "RML": {
+    "authors": ["Knowledge Graph Construction Community Group"],
+    "href": "https://w3id.org/rml/core/spec",
+    "title": "RML: Generic Mapping Language for RDF",
+    "status": "W3C Community Group Draft Report"
+  }
+}
+</pre>
+
+# Introduction # {#intro}
+
+The FAIR Data Train (FDT) is a FAIR-based platform framework that aims at guaranteeing a specific
+level of interoperability among its participant elements. It defines a set of application types and
+their expected behaviours to support the findability, accessibility, interoperability and
+reusability of data following the FAIR principles [[FAIR-PRINCIPLES]]. The FDT follows the analogy
+of a train system with two main elements, *stations* and *trains*. <dfn export>Data Stations</dfn> make
+data (or other kinds of digital objects) available and publish metadata about themselves and about
+their content. <dfn export>Trains</dfn> represent analysis or processing algorithms that are sent to
+Data Stations to process the data where it is: **the computation travels to the data, and the data
+stays**. A registry indexes the metadata the stations publish, so that a client can find out which
+station holds which data before sending anything anywhere.
+
+In this document, data means not only the content of artefacts such as databases, tables and
+graphs, but also other kinds of digital objects such as controlled vocabularies, ontologies and
+models; unless otherwise stated the terms are used interchangeably. The FAIR Data Train
+architecture defines a number of key capabilities:
+
+* provisioning of metadata to describe digital objects;
+* a common representation format [[RDF11-CONCEPTS]] to express the metadata in a machine-actionable manner;
+* a common approach to inform clients on how to navigate through the metadata structure;
+* a common representation format [[SHACL]] for the metadata schemas — and, since version 0.2, for what a train *requires* of a station's data and what a station's data *conforms to*, which is how a station is selected for a train;
+* a common way of describing how data sources support interactions with their content, in terms of metadata properties of the station;
+* a common way to represent how client applications interact with data: the interfaces and protocols by which a station accepts an incoming train, negotiates the terms under which it may run, runs it, and decides what may leave.
+
+The main goal of the FDT general architecture is to define a set of behaviours, interfaces and
+protocols to improve interoperability among data sources and data processing services. To fulfil
+this goal, the FDT specifications help developers build new applications, or extend existing ones,
+so that they can take part in the FAIR Data Train ecosystem. The envisioned scenario is one with a
+multitude of trains, stations and client applications, independently created and able to interact
+with one another because they all follow the same base guidelines — interfaces, protocols and
+representation formats.
+
+## Purpose ## {#purpose}
+
+The purpose of this document is to present the general architecture of the FAIR Data Train: its
+roles, its components, how they interact and the standards they rest on. It is primarily intended
+as a reference for developers willing to add FDT functionality to their existing applications, or
+to develop their own implementation of an FDT component. Knowledge of RDF, SHACL, ODRL and REST
+APIs is required to follow it.
+
+This document is the entry point to a set of specifications. Where a part of the architecture is
+specified in full elsewhere, this document says what the part is for and points at the
+specification that governs it. In version 0.2 that is one document: the **FDT Visit Protocol**
+[[!FDT-VISIT-PROTOCOL]], which specifies the conversation between a Data Station and a Train
+Handler for one visit of one train.
+
+## How this document relates to the reference implementation ## {#reference-implementation}
+
+*This section is non-normative.*
+
+A reference implementation of the ecosystem exists [[FDT-COMMONS]] and this version of the
+architecture was written against it: every component in [[#components]] except the alignment
+station has a running implementation, the interactions of [[#interactions]] are exercised end to
+end by its test suites and testbed, and the normative artefacts of the Visit Protocol — JSON
+Schemas, OpenAPI documents, SHACL shapes and the fixtures every component is tested against — are
+the contracts that implementation is built on. The architectural decisions behind the text are
+recorded as Architecture Decision Records [[FDT-ADR]] and are cited here by number (*ADR-nnn*)
+where a reader may want the reasoning rather than the result.
+
+## Changes since version 0.1 ## {#changes}
+
+*This section is non-normative.*
+
+Version 0.1 (10 July 2025) described the FDT as it was first conceived. Version 0.2 brings it up
+to date with what has since been built, and the following names and ideas changed:
+
+<table class="data">
+  <thead><tr><th>Version 0.1<th>Version 0.2<th>Why
+  <tbody>
+  <tr><td>*Personal Gateway*<td>**Individual Gateway**<td>The controller-side agent serves one controller — a company or a natural person — across every station holding their data, not only persons.
+  <tr><td>*Station Directory*, "a special kind of Data Station"<td>**FDT Registry**<td>The registry is an index over what stations and depots publish and is not a trust anchor: nothing may be granted on the strength of an entry, and it is not a station.
+  <tr><td>*Train Provider*<td>**Train Creator**<td>The role is the party that created a train and is answerable for it. The ontology keeps `fdt-o:TrainProvider` as the IRI with "Train Creator" as its label, because a published IRI is a promise.
+  <tr><td>—<td>**Train Depot**<td>Trains are contracted assets with an identity, a creator's offer and a verifiable payload. The Depot is the authority for a train; a station resolves a train there before running it.
+  <tr><td>—<td>**Linkage Station**, **Alignment Station**<td>Two station types for the two cross-organisational services a multi-station analysis needs: identifier translation between pseudonym spaces, and vocabulary alignment.
+  <tr><td>—<td>**Visit Protocol** [[FDT-VISIT-PROTOCOL]]<td>The Content Interaction Interface of version 0.1 was a heading. It is now a specification: how a train is dispatched, how an agreement is negotiated and signed by both parties on arrival, how every decision is reported, and how a result leaves.
+  <tr><td>Agreement signed by the station<td>Agreement signed by **both parties**<td>A record kept by one party and signed by that party alone proves nothing to a third party. Each party signs the same canonical form.
+</table>
+
+The three interface groups of the Data Station are unchanged in name; [[#datastation]] now says
+what each one is.
+
+# Roles # {#roles}
+
+The parties of an FDT ecosystem, and what each is answerable for. A party may play several roles;
+a role may be played by an organisation or, where the deployment admits it, by a natural person.
+
+<table class="data">
+  <thead><tr><th>Role<th>Party<th>Responsibility
+  <tbody>
+  <tr><td><dfn export>Data Controller</dfn><td>An organisation or a natural person with authority over data hosted at one or more stations<td>Authors the access conditions over their data, as ODRL offers; approves agreements where a person is required to; may revoke an agreement they granted. The identified `assigner` of every agreement over their resources. Distinct from the Station Owner (ADR-011): hosting data is not controlling it. Acts through a station's console or, across stations, through an Individual Gateway.
+  <tr><td><dfn export>Station Owner</dfn><td>The organisation (or, in the personal profile, the person) operating a station<td>Sets station-wide policy — quotas, permitted mechanisms, networks served — orthogonal to the controllers' conditions. The effective decision over a request is the conjunction of the controller's offer and the owner's policy.
+  <tr><td><dfn export>Data Consumer</dfn> / <dfn export>Train Owner</dfn><td>The party accountable for a run<td>The `assignee` of every agreement a run concludes; submits trains through a Train Handler and receives inspected, non-personal results.
+  <tr><td><dfn export>Train Creator</dfn><td>The party that created a train and publishes it<td>Offers the train as a contracted asset through a Train Depot, under their own licence; signs what they publish. When a creator sends their own train, they also play the Train Owner role.
+  <tr><td>Train Handler operator<td>Runs dispatch and orchestration infrastructure<td>Not a party to any agreement; may hold aggregate results only (ADR-015).
+  <tr><td>Registry operator, Train Depot operator<td>Run a registry or a depot<td>A registry harvests and indexes; it is never a trust anchor. A depot is the authority for the trains it holds — bytes, digests, declared parameters and output, the creator's offer and keys.
+  <tr><td>Linkage service provider, Alignment service provider<td>Operate linkage or alignment stations<td>Trusted third parties for identifier translation; vocabulary and mapping services.
+  <tr><td><dfn export>Network governance authority</dfn><td>One per FDT network<td>Participation rules, evidence categories, trusted identity issuers and trust anchors for the network (ADR-017).
+</table>
+
+# Components # {#components}
+
+<figure id="fig-ecosystem">
+  <img src="images/fdt-ecosystem-components.svg" width="1641" height="785" alt="The components of an FDT ecosystem in four groups. Consumer side: the Train Handler and the Train Creator's publications. Controller side: the Individual Gateway. Federation services: the FDT Registry, the Train Depot and the governance function. Data Stations, which may belong to several networks: the Data Station, the Linkage Station and the Alignment Station. Underneath all of them, fdt-commons: the shared contracts every component validates against. Solid lines are version 1 interactions; dotted lines are version 2 or governance.">
+  <figcaption>The components of an FDT ecosystem, and the shared contracts under them</figcaption>
+</figure>
+
+<table class="data">
+  <thead><tr><th>Component<th>Responsibility
+  <tbody>
+  <tr><td><dfn export>Data Station</dfn><td>Hosts data; publishes FAIR metadata about itself and its content; receives trains; negotiates an agreement per visit on arrival; enforces policy at three checkpoints; executes the train through an interaction-mechanism adapter; returns the inspected result, or lets inspected state travel onward. [[#datastation]].
+  <tr><td><dfn export>Train Handler</dfn><td>The consumer-side agent: selects and parametrises a train, composes a plan, dispatches visits to stations (push or poll), orchestrates multi-station itineraries, collects the non-personal results and provenance, and shows the run as it happens. The Handler owns the run; the station owns the visit. [[#trainhandler]].
+  <tr><td><dfn export>Individual Gateway</dfn><td>The controller-side agent for one controller across every station hosting their data: author and revoke access conditions, review the agreements concluded over their data and the audit slice that touched it, receive and decide approval requests, exercise opt-out. [[#gateway]].
+  <tr><td><dfn export>FDT Registry</dfn><td>A metadata registry: harvests and indexes what stations and depots publish, and answers which stations hold the data a train needs. An index and never a trust anchor. [[#registry]].
+  <tr><td><dfn export>Train Depot</dfn><td>The authority for a train and a catalogue of train offers: payload bytes and digest, declared parameters and output, the creator's licence as an ODRL offer and the creator's signing keys. [[#depot]].
+  <tr><td><dfn export>Linkage Station</dfn><td>A station whose interaction mechanism is identifier translation between organisational pseudonym spaces; visited as a hop under its own agreement; wraps an existing trusted third party. [[#linkage]].
+  <tr><td><dfn export>Alignment Station</dfn><td>A station or service offering vocabulary and mapping alignment — code systems, administrative units — consulted by trains or visited as a hop. [[#linkage]].
+  <tr><td>Governance function<td>Per network: onboarding, evidence, trusted issuers and trust anchors, rule publication; exposes machine-readable membership so stations and handlers can check who belongs to which network. [[#networks]].
+  <tr><td><dfn export>fdt-commons</dfn><td>The shared contracts: the FDT ontology and profiles, SHACL shapes, JSON-LD contexts, JSON Schemas and OpenAPI documents, state machines and their mapping to the Dataspace Protocol, and the fixtures every component is tested against. [[#contracts]].
+</table>
+
+Trains are packaged, executable interactions of four families — query, API, script and
+container — and are **assets, not datasets**: a train is something a station runs, not something
+it hosts (ADR-020). A train has an identity and an offer of its own, carries a payload with a
+digest, and declares the data it needs (as a SHACL model) and the output it produces (as a JSON
+Schema).
+
+## Data Station ## {#datastation}
+
+Since the purpose of the FAIR Data Train architecture is to define a set of desired behaviours that
+applications expose and support, the definition of the Data Station is the definition of its
+interface. The interface is divided into three groups, as depicted in <a href="#fig-fds">the figure below</a>: the
+<dfn export>Metadata Interface</dfn>, the <dfn export>Station Interface</dfn> and the <dfn export>Content Interaction
+Interface</dfn>. Each group exposes the interfaces of a number of services the station provides,
+and the interaction with the data happens only through the station's interaction component, which
+is the one component that connects to the data storage.
+
+<figure id="fig-fds">
+  <img src="images/fds_simplified_view.png" alt="The FDS API exposes a Metadata Interface, a Station Interface and a Content Interaction Interface, each realised by a service and a component; only the Interaction Component connects to the Data Storage." width="80%">
+  <figcaption>Interface groups of the Data Station</figcaption>
+</figure>
+
+### Metadata Interface ### {#metadatainterface}
+
+The Metadata Interface publishes what the station holds and on whose terms, as RDF, following the
+FAIR Data Point specification [[FDP]] for the metadata structure and its navigation. A station
+publishes:
+
+* a **catalogue** [[VOCAB-DCAT-3]] of the hosted datasets it serves and of the dataset *parts* a controller offers in their own right, each with its distributions per interaction mechanism, its `dcat:theme`, and the ODRL offer [[ODRL-MODEL]] that states the controller's access conditions over it;
+* for each dataset or part, what its data **conforms to**: a SHACL shape [[SHACL]], served by the station alongside the catalogue. This is what makes station selection answerable — a train declares the data it needs as a SHACL model, and a station matches when the shapes it publishes cover that model (ADR-030). Where the station's data is not natively RDF, the shape is generated from the mapping the dataset declares [[RML]] and the mapping is published too.
+
+Publishing a catalogue entry grants nothing. A catalogue says what exists and under which terms;
+every access is still negotiated on arrival against the offer, per visit.
+
+### Station Interface ### {#stationinterface}
+
+The Station Interface publishes the station's **self-description**: its type and the interaction
+mechanisms it supports, the networks it is a member of and the governance authority of each, the
+dispatch modes it accepts (push, poll, or both), the protocol versions it implements, and links to
+its metadata and catalogue. The self-description is what a Train Handler reads to know whether a
+station will accept a train from a given network and how to reach it: the station's dispatch
+endpoint is a `dcat:DataService` whose `dct:conformsTo` names the Visit Protocol version.
+
+### Content Interaction Interface ### {#contentinteractioninterface}
+
+The Content Interaction Interface is the **Visit Protocol** [[!FDT-VISIT-PROTOCOL]]: the
+conversation between a Train Handler and a Data Station for one visit — one train, at one
+station, under one agreement. It covers dispatch, negotiation on arrival, the signatures of both
+parties, every checkpoint decision as an event, execution progress, result delivery and the
+hand-over of onward state. It is deliberately the only interface a station has to implement to
+take part in any itinerary pattern. A Data Station conforms to this architecture by conforming to
+that protocol as a station.
+
+Behind the interface a station enforces policy at three checkpoints, with negotiation between the
+first two:
+
+<table class="data">
+  <thead><tr><th>Checkpoint<th>Decides
+  <tbody>
+  <tr><td><dfn export>PEP 1</dfn> — arrival<td>Is the caller who they say, is the descriptor valid, is the payload the one the train's depot offer names (by digest), does this station support the mechanism. A failure here **rejects** the visit.
+  <tr><td><dfn export>NEG</dfn> — negotiation<td>Is the request satisfiable under the controller's offer for the visit's network and the owner's policy. Produces an agreement, or asks a person where a machine may not decide, or **refuses** — a controller's decision, never a checkpoint's.
+  <tr><td><dfn export>PEP 2</dfn> — before execution<td>Is the agreement active and signed by both parties, is it about this visit, do the station's quotas allow the run.
+  <tr><td><dfn export>PEP 3</dfn> — after execution<td>Does the result conform to the train's declared output, does every duty of the agreement hold on it, what class of state may leave and where to. A failure here **rejects** the result; nothing leaves.
+</table>
+
+## Train Handler ## {#trainhandler}
+
+The Train Handler is the consumer's agent. It resolves a train from a Train Depot, asks the
+registry which stations hold the data the train needs, composes a <dfn export>plan</dfn> — the train, its
+parameter values, an itinerary and the consumer's purpose as an ODRL request template — and runs
+it: one <dfn export>run</dfn> is one execution of a plan, decomposed into <dfn export>visits</dfn>, each one
+train execution at one station under one agreement. The Handler dispatches each visit by push or,
+for a station that accepts no inbound connection, by letting the station poll for it; follows the
+station's event stream; signs the assignee's side of each agreement with the train owner's key;
+applies the plan's failure policy to each outcome; and assembles the run record and the
+**completeness statement** — for every intended station, its outcome in the protocol's own words,
+its cause and the station's stated reason.
+
+The Handler holds **non-personal, aggregate results only** (ADR-015). Record-level data never
+leaves the station that hosts it, except to another station under an agreement.
+
+## Individual Gateway ## {#gateway}
+
+The Individual Gateway is one controller's agent across every station hosting data they control.
+Through it a controller authors access conditions once and publishes them to each station, reviews
+the agreements concluded over their data and the slice of each station's audit trail that touched
+it, receives approval requests where a person must decide and decides them, and exercises
+revocation and opt-out. A controller may also act directly at a station's own console; the Gateway
+is what makes the same controller's view coherent across stations.
+
+## FDT Registry ## {#registry}
+
+The registry harvests the self-descriptions and catalogues that stations and depots publish and
+indexes them: stations by interaction mechanism, network, theme, the shapes their data conforms to
+and the join keys they offer; trains by what they require. Its central question is **which stations
+hold the data this train needs**, answered by structural coverage of the train's data requirement
+by a station's published shapes — and, for a near miss, by naming the property a station lacks.
+A registry is an index: nothing may be granted on the strength of an entry, a station may be
+indexed by several registries, and a Handler acts on what a station publishes, not on what a
+registry harvested.
+
+## Train Depot ## {#depot}
+
+The Train Depot is the authority for a train. It holds the payload bytes and their digest, the
+train's declared parameters, data requirement and output, the creator's licence over the train as
+an ODRL offer, and the creator's public signing keys; it publishes them as a catalogue of train
+offers. A station resolves a train at the Depot before anything runs and verifies that the payload
+it was handed is the one the Depot describes. Taking a train from a Depot is itself a two-party
+agreement — the creator's licence, signed by the creator's Gateway and by the would-be owner — and
+a Depot signs nothing in anybody's name.
+
+## Linkage and Alignment Stations ## {#linkage}
+
+Both are ordinary stations, visited with the same protocol under their own agreements. A Linkage
+Station's mechanism is identifier translation: it receives a list of pseudonyms in one
+organisation's space and returns the corresponding list in another's — **one side only, never the
+pair**, and in an order that discloses no correspondence — so that two stations can be joined at
+the level of the individual by nobody but the trusted third party. An Alignment Station offers
+vocabulary and mapping services — code systems, spatial and administrative units — that a train
+consults or visits as a hop.
+
+## Networks and governance ## {#networks}
+
+An <dfn export>FDT network</dfn> is a set of participants that accept one governance authority's
+rules and trust anchors. A station frequently serves several communities at once, so **a station
+may belong to several networks with different governance** (ADR-017). The station's
+self-description lists its memberships; policy is evaluated per network, because a controller's
+offer may differ per network; every agreement records the network it was concluded under; and
+identity is issued by network authorities, not by the FDT — in version 1 through federated OpenID
+Connect providers the network trusts [[OPENID-CONNECT-CORE]].
+
+A network also states whether a station in it **may conclude a negotiation without a person**.
+Where it may not, the station still evaluates the request and produces a recommendation with its
+evidence, and a person decides; where a machine may not grant, it may not refuse either (ADR-032).
+
+## Shared contracts ## {#contracts}
+
+Interoperability rests on shared contracts, not on shared code. `fdt-commons` [[FDT-COMMONS]]
+holds the FDT ontology [[FDT-O]] and the ODRL and run-description profiles; the SHACL shapes that
+every published document and every arriving request is validated against; the JSON Schemas and
+OpenAPI documents of the Visit Protocol and of the other component interfaces; the state machines
+and their mapping to the Dataspace Protocol [[DSP]]; and the fixtures every implementation is
+tested against, including counter-examples that must fail. No component redefines a term, shape,
+schema or endpoint that exists there, and a change to a contract is made there first.
+
+# Interactions # {#interactions}
+
+## Plan, run, visit ## {#plan-run-visit}
+
+A plan names a train, its parameter values, an itinerary — the pattern, the entry stations or a
+registry query that selects them, phases and dependencies, stop conditions, budget — and the
+consumer's purpose as an ODRL request template. A run is one execution of a plan. A visit is one
+train execution at one station under one agreement. Every itinerary pattern — a single visit,
+fan-out over many stations, a sequence, a discovery chain that learns where to go next from what it
+finds, iterative rounds, two-phase selection, composition — decomposes into visits, which is why
+the Visit Protocol is the only interface a station needs.
+
+## Agreements, per visit, signed by both parties ## {#agreements}
+
+Every visit — including a visit to a linkage or alignment station — is governed by its own ODRL
+agreement, negotiated on arrival (ADR-014). The station matches the train's request against the
+controller's offer for the visit's network and the owner's policy and **derives** the agreement:
+it grants exactly the actions requested that the offer permits, carries every usage constraint
+bounded by what was offered, carries the offer's prohibitions and duties verbatim, records the
+eligibility facts it established as evidence rather than as live terms, and pins the offer, the
+request and the train's payload by digest. There is no counter-offer: narrowing is always
+permitted and widening never is.
+
+The agreement is then **signed by both parties over the same canonical form**: the station signs
+the assigner's side — with the controller's key where they hold one, otherwise as the controller's
+agent, and the signature says which — and the Train Handler signs the assignee's side with the
+train owner's key. An agreement only one party has signed is not an agreement, and nothing runs
+under one. Both parties keep a pinned copy; neither can rewrite history unnoticed by the other, and
+a third party holding the document can verify it without asking either.
+
+## Dispatch, checkpoints and outcomes ## {#dispatch}
+
+<figure id="fig-visit">
+  <img src="visit-protocol/diagrams/seq-push-dispatch.svg" width="960" height="820" alt="Sequence diagram of one visit under push dispatch: descriptor pushed, PEP 1, negotiation, the station's signature, the Handler's signature, PEP 2, execution, PEP 3, delivery; every decision an event.">
+  <figcaption>One visit, push-dispatched: the Handler pushes a descriptor, the station decides at each checkpoint and reports every decision as an event, both parties sign the agreement, and the inspected result is delivered</figcaption>
+</figure>
+
+A visit is dispatched by **push** — the Handler posts a visit descriptor to the station — or by
+**poll** — a station that accepts no inbound connection fetches the descriptors waiting for it
+from the Handler. Beyond the gateway the two are processed identically (ADR-004). The station then
+runs the visit through its checkpoints ([[#contentinteractioninterface]]), and **every decision
+it takes is an event with a justification** (ADR-027): the ordered event stream is the source of
+truth for what happened to a visit, for the Handler's view of the run and for the audit trail a
+controller reads.
+
+Every visit ends in exactly one of seven outcomes, and the words are part of the contract (ADR-026),
+because a completeness statement reports them to a data consumer verbatim:
+
+<table class="data">
+  <thead><tr><th>Outcome<th>Meaning<th>Whose
+  <tbody>
+  <tr><td><dfn export>Delivered</dfn><td>The result passed inspection and left the station (possibly redacted to meet a threshold).<td>—
+  <tr><td><dfn export>Refused</dfn><td>Access was declined at negotiation — by the controller's standing conditions or by a person.<td>A **controller's** decision, with their stated reason
+  <tr><td><dfn export>Rejected</dfn><td>A checkpoint's verdict on a document or a result: an invalid descriptor, a payload that is not the one offered, a result a duty forbids.<td>A **checkpoint's** verdict; nobody decided anything
+  <tr><td><dfn export>TimedOut</dfn><td>A person was asked and the wait ran out, or the Handler withdrew the visit.<td>**Nobody** decided
+  <tr><td><dfn export>Failed</dfn><td>Machinery broke.<td>—
+  <tr><td><dfn export>Revoked</dfn><td>The controller took the agreement out of force while the visit was queued or running.<td>A **controller's** act over an agreement they granted
+  <tr><td><dfn export>Skipped</dfn><td>The run never asked this station — a phase condition excluded it, a chain was pruned, the failure policy dropped it.<td>The **Handler's** record; no station can report it about itself
+</table>
+
+These are not shades of one fact. Reporting a controller's refusal as a rejection tells a consumer
+their request failed a check when a person declined it; reporting a timeout as either puts a
+verdict in the mouth of somebody who never gave one. Implementations keep the vocabulary exact in
+code, logs and user interfaces.
+
+## State between hops ## {#state-between-hops}
+
+Three mechanisms carry state from one visit to the next, chosen per plan and constrained by the
+stations' policies (ADR-016): **inside the train** — a container or script train carries state, and
+the origin station's PEP 3 judges what may leave with it; **via the Handler** — only non-personal
+state returns to the Handler and is re-injected as parameters; **via a linkage station** — only
+opaque pseudonyms cross an organisational boundary, translated by the trusted third party and
+handed to the next station **by location and digest, never by value**, so that the Handler holds a
+name and the bytes stay at the station that produced them.
+
+# Standards # {#standards}
+
+*This section is non-normative.*
+
+The FDT is built on open standards, and this table says how each is used — *used* where the
+reference implementation reads or writes it as specified, *aligned* where the FDT is designed to
+map onto it, *declared* where the architecture names it and the implementation does not yet
+exercise it.
+
+<table class="data">
+  <thead><tr><th>Standard<th>Where<th>Status
+  <tbody>
+  <tr><td>RDF 1.1 [[RDF11-CONCEPTS]], JSON-LD 1.1 [[JSON-LD11]]<td>All metadata, catalogues, self-descriptions, offers, requests and agreements; the Visit Protocol's RDF payloads.<td>used
+  <tr><td>DCAT 3 [[VOCAB-DCAT-3]], FAIR Data Point [[FDP]]<td>Station catalogues (datasets, parts, distributions, services); the metadata structure and its navigation.<td>used
+  <tr><td>SHACL [[SHACL]]<td>Validation of every published document and arriving request; a train's data requirement and a station's data description, matched by coverage.<td>used
+  <tr><td>ODRL 2.2 [[ODRL-MODEL]] [[ODRL-VOCAB]] with the FDT profile<td>Access conditions (offers), requests, agreements and the derivation rule between them; the purpose vocabulary from DPV [[DPV]].<td>used
+  <tr><td>PROV-O [[PROV-O]]<td>The run record: a run is an activity, its visits sub-activities, the merged result a derivation from the delivered visits.<td>used
+  <tr><td>JSON Schema [[JSON-SCHEMA]], OpenAPI 3.1 [[OPENAPI]]<td>The Visit Protocol's three message types and every HTTP interface in the ecosystem.<td>used
+  <tr><td>OpenID Connect [[OPENID-CONNECT-CORE]], OAuth 2.0 Token Exchange [[RFC8693]]<td>Federated identity, trusted per network; the acting person carried as RFC 8693's actor claim; a graded dispatch credential.<td>used
+  <tr><td>Ed25519 [[RFC8032]], JSON Web Key [[RFC7517]], RDF Dataset Canonicalization [[RDF-CANON]]<td>Signatures of both parties over the canonical form of an agreement and of a train's submission; keys published as JWK sets.<td>used
+  <tr><td>RFC 9457 Problem Details [[RFC9457]]<td>Every error a component returns, carrying the FDT outcome word and the checkpoint.<td>used
+  <tr><td>Dataspace Protocol 2025-1 [[DSP]]<td>Agreement and visit lifecycles are mapped onto Contract Negotiation and Transfer Process states; the mapping is documentation in version 1 and a binding in version 2 (ADR-019).<td>aligned
+  <tr><td>RML [[RML]]<td>Where a station's data is not RDF, the mapping its published shape is generated from.<td>declared
+  <tr><td>Verifiable Credentials<td>The identity model is kept credential-ready so that W3C Verifiable Credentials can replace bearer tokens without a schema migration (ADR-010); eligibility evidence is where they would first apply (ADR-031).<td>declared
+</table>
+
+# Conformance classes # {#conformance-classes}
+
+This document defines no conformance classes of its own. A **Data Station** conforms to the FAIR
+Data Train architecture when it conforms to the Visit Protocol [[!FDT-VISIT-PROTOCOL]] as a
+station and publishes the metadata and self-description of [[#metadatainterface]] and
+[[#stationinterface]]; a **Train Handler** conforms when it conforms to the Visit Protocol as a
+Handler. Conformance requirements for the other components will be specified in their own
+documents as those are published.

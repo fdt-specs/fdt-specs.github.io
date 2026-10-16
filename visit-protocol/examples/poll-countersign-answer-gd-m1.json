@@ -1,0 +1,10 @@
+{
+  "agreement": "https://example.org/fdt/agreement/agr-m1-01",
+  "signature": {
+    "signedBy": "https://example.org/fdt/party/eu-cardionet-like",
+    "keyId": "https://handler.cardionet.example/fdt/v1/keys/1",
+    "algorithm": "EdDSA",
+    "signedDigest": "sha256:a693463c971c9531ba74a8ba2f33efc64df38ee8da47397e2a07e304e706009f",
+    "value": "TtmuJ0hgTbt4K7UE-o7f3vZEqvJoFD7CFSW8OEmHEUNQ8pJy-2TlXun9jB515wzHMeT3L3UbBDSo14gtezIWAw"
+  }
+}

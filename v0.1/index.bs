@@ -1,0 +1,159 @@
+<pre class="metadata">
+Title: FAIR Data Train general architecture
+Shortname: fdt-architecture
+Level: none
+Status: DREAM
+Text Macro: DOCSTATUS Working Draft
+Status Text: This is a public copy of the editors’ draft. It is provided for discussion only and may change at any moment. Its publication here does not imply endorsement of its contents by any organization. Don’t cite this document other than as work in progress. <strong>This is version 0.1, as published on 10 July 2025; its content is unchanged and it is superseded by the <a href="https://specs.fairdatatrain.org/">latest version</a>.</strong>
+URL: https://specs.fairdatatrain.org/v0.1/
+!Latest version: <a href="https://specs.fairdatatrain.org/">https://specs.fairdatatrain.org/</a>
+!Date of the first draft: 14 December 2021
+Date: 2025-07-10
+Editor: Luiz Olavo Bonino da Silva Santos, University of Twente and Leiden University Medical Center, l.o.boninodasilvasantos@utwente.nl
+!Contributors: <a href="mailto:kees.burger@health-ri.nl">Kees Burger</a> (Health RI), <a href="mailto:RKaliyap@ITS.JNJ.com">Rajaram Kaliyaperumal</a> (Janssen Pharmaceuticals)
+!Feedback: <a href="mailto:l.o.boninodasilvasantos@utwente.nl?subject=%5Bfdt-spec%5D%20YOUR%20TOPIC%20HERE">l.o.boninodasilvasantos@utwente.nl</a>
+!Reference Implementation: <a href="https://github.com/FAIRDataTeam/FAIRDataTrain">https://github.com/FAIRDataTeam/FAIRDataTrain</a>
+Issue Tracking: GitHub https://github.com/FAIRDataTeam/FAIRDataTrain/issues
+Repository: fdt-specs/fdt-specs.github.io
+Abstract: This document describes the general architecture of the FAIR Data Train (FDT). The architecture includes the FDT's the core components, metadata structure and schema, API and validation rules.
+Markup Shorthands: markdown yes, css no, idl no, dfn yes, biblio yes
+Boilerplate: conformance no
+Local Boilerplate: header yes, status yes, copyright yes
+Complain About: missing-example-ids no
+</pre>
+
+<pre class="biblio">
+{
+  "FAIR-PRINCIPLES": {
+    "authors": ["Mark D. Wilkinson", "Michel Dumontier", "IJsbrand Jan Aalbersberg", "et al."],
+    "href": "https://doi.org/10.1038/sdata.2016.18",
+    "title": "The FAIR Guiding Principles for scientific data management and stewardship",
+    "publisher": "Scientific Data 3, 160018",
+    "date": "15 March 2016"
+  },
+  "FDP": {
+    "authors": ["FAIR Data Point Working Group"],
+    "href": "https://specs.fairdatapoint.org/",
+    "title": "FAIR Data Point specification",
+    "status": "Working Draft"
+  }
+}
+</pre>
+
+<!--
+  This is the General Architecture as it stood on 10 July 2025, converted from the hand-written
+  HTML page to Bikeshed. The text is the published text, including two sections that were left
+  unfinished in that version (§2.1.1's "TODO" and §2.1.2's truncated sentence); nothing has been
+  added or corrected here. The latest version is at the root of this site.
+-->
+
+# Introduction # {#intro}
+
+The FAIR Data Train (FDT) is a FAIR-based platform framework that aims at guarateeing a specific
+level of interoperability among its participant elements/components. It defines a set of
+application types and their expected behaviors to support the findability, accessibility,
+interoperability and reusability of data following the FAIR principles [[FAIR-PRINCIPLES]]. The
+FDT follows the analogy of a train system where we have two main elements, stations and trains.
+FAIR Stations are responsible of making data (or other types of digital objects) available and
+provide metadata about themselves (the Stations) and their content (data or other types of digital
+objects). FAIR Trains represent analysis/processing algorithms that are sent to FAIR Stations to
+process and/or analyze data. Additionally, a Station Directory is a special kind of FAIR Station
+which indexes the metadata of other stations and provide search capabilities. Therefore, Station
+Directories can be consulted to verify which station provides which data.
+
+In this document, we consider data not only the content of artefacts such as databases, tables,
+graphs, etc., but also other types of digital objects such as controlled vocabularies, ontologies,
+models, etc. From now on, unless otherwise explained we use the terms data and other types of
+digital objects interchangeably. The FAIR Data Train architecture defines a number of key
+capabilities:
+
+* Provisioning of metadata to describe digital objects;
+* A common representation format [[RDF11-CONCEPTS]] to express the metadata in a machine-actionable manner;
+* A common approach to inform clients on how to navigate through the metadata structure;
+* A common representation format [[SHACL]] for the metadata schemas;
+* A common way of describing how data sources support interactions with their content in terms of metadata properties of the station;
+* A common way to represent how client applications can interact with data, i.e., interfaces and protocols for the station to accept incoming trains
+
+The main goal of the FDT general architecture is to define a set of behaviours, interfaces and
+protocols to improve interoperability among data sources and data processing services. To fulfill
+this goal, this document contains a set of specifications to help developers to build new
+applications or to extend the functionality of their existing applications in a way that these
+applications can also be part of the FAIR Data Train ecosystem. The envisioned scenario is the one
+with a multitude of trains, stations and client applications independently created and able to
+interact with one another because they all follow the same base guidelines (interfaces, protocols,
+representation formats, etc.).
+
+## Purpose ## {#purpose}
+
+The purpose of this document is to present the general architecture of the FAIR Data Train. This
+document includes requirements, architecture, design principles and design of the FDT. This
+architecture is primarily intended to be a reference for developers willing to add the FDT
+functionality into their existing applications or develop their own FAIR Data Train
+implementation. In order to better understand this specification, a knowledge of RDF, LDP, SHACL
+and REST APIs is required.
+
+## Document conventions ## {#conventions}
+
+Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119
+terminology. The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD
+NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in the normative parts of this document are to be
+interpreted as described in RFC 2119. However, for readability, these words do not appear in all
+uppercase letters in this specification.
+
+All of the text of this specification is normative except sections explicitly marked as
+non-normative, examples, and notes. [[!RFC2119]]
+
+# Main components # {#maincomponents}
+
+As depicted in Figure 2.1, the main elements (applications, roles and interaction mechanisms) of
+the FAIR Data Train are:
+
+* <strong>FAIR Data Station</strong>: application type responsible for making data and their related metadata available to users under the accessibility conditions determined by applicable regulations and the related `Data Controllers`. The Data Station is also able to register itself in a Station Directory to have its metadata indexed by that directory;
+* <strong>Personal Gateway</strong>: application responsible to intermediate the communication between `Data Stations` and `Data Controllers`. The `Data Controller` exercises its/his/her control over the data available in different `Data Stations` through the `Personal Gateway`
+* <strong>Station Directory</strong>: application responsible to index metadata from the reachable `Data Stations` and allow users (client applications) to search for data available on those stations.
+* <strong>Train</strong>: represents the way data consumers interact with the data available on `Data Stations`. The `Trains` can be of different types, such as API calls, container images, queries, messages, etc. `Trains` can only visit `Data Stations` that support the same type of interaction, e.g., a SQL query train requires a station that supports this type of query;
+* <strong>Train Handler</strong>: application that represents client applications that can interact with the `Station Directory` to discover the existance and location of data and `Data Stations` to actually work with the available data;
+* <strong>Station Owner</strong>: role played by stakeholders that are responsible for managing and running `Data Stations`. Since the Station Directory is a specialisation of Data Station, the same role of Station Owner applies to the Station Directory;
+* <strong>Data Controller</strong>: role played by individuals or organizations that have controlling rights over data;
+* <strong>Train Owner</strong>: role played by individuals or organizations responsible for sending `Trains` to `Data Stations`;
+* <strong>Train Provider</strong>: role played by individuals or organizations that create `Trains` to be used by themselves or others. When a `Train Provider` uses its own created `Train` and sends it to access data in `Data Stations`, it is, at this moment, playing also the role of `Train Owner`.
+
+<figure id="fig-highlevel">
+  <img src="../images/highlevelview.png" alt="High-level architecture view: roles (Station Owner, Data Controller, Directory Owner, Train Provider, Train Owner) connected to the products Data Station, Personal Gateway, Station Directory, Train and Train Handler.">
+  <figcaption>High-level architecture of the FAIR Data Train</figcaption>
+</figure>
+
+## FAIR Data Station ## {#datastation}
+
+Since the purpose of the FAIR Data Train architecture is to define a set of desired behaviours
+that applications should expose and support, the definition of the FAIR Data Station (FDS) should
+specify the station's interface. For simplicity, we first start by dividing the `FDS API` in
+following three major groups, namely, `Metadata Interface`, `Station Interface` and `Content
+Interaction Interface`, as depicted in Figure 2.2. Each one of these interface groups are intended
+to expose the interfaces of a number of services available at the FDS.
+
+<figure id="fig-fds">
+  <img src="../images/fds_simplified_view.png" alt="FDS interface groups: the FDS API exposes a Metadata Interface, a Station Interface and a Content Interaction Interface, each backed by a service and a component; the Interaction Component connects to the Data Storage." width="80%">
+  <figcaption>Interface groups of the FAIR Data Station</figcaption>
+</figure>
+
+In this Figure 2.2, it is also made explicit that the interaction with the data happens through
+the FDS' `Interaction Component`, which connects with the actual `Data Storage` component.
+
+### Metadata Interface ### {#metadatainterface}
+
+The `Metadata Interface` complies with the [FAIR Data Point specifications](https://specs.fairdatapoint.org) [[FDP]].
+
+TODO: add details from the FDP specs.
+
+### Station Interface ### {#stationinterface}
+
+The `Station Interface` is repos
+
+### Content Interaction Interface ### {#contentinteractioninterface}
+
+## Station Directory ## {#stationdirectory}
+
+## Personal Gateway ## {#personalgateway}
+
+## Train Handler ## {#trainhandler}
