@@ -1497,8 +1497,17 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://specs.fairdatatrain.org/" rel="canonical">
-  <meta content="47e285bf5356ecac2cb23f4ec2d5d4c309898048" name="revision">
+  <meta content="38924aeb5e5f563766759c765da7ea6c12f47a4b" name="revision">
   <meta content="dark light" name="color-scheme">
+<style>
+/* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
+table.criteria { table-layout: fixed; width: 100%; }
+table.criteria th, table.criteria td { text-align: left; vertical-align: top; padding: .5em .6em; }
+table.criteria th:first-child, table.criteria td:first-child { width: 4.5em; white-space: nowrap; font-weight: bold; }
+table.criteria th:nth-child(2), table.criteria td:nth-child(2) { width: 42%; }
+table.criteria th:nth-child(3), table.criteria td:nth-child(3) { width: 12%; }
+table.criteria td code { overflow-wrap: anywhere; }
+</style>
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2121,9 +2130,16 @@ dfn > a.self-link::before      { content: "#"; }
       <li><a href="#state-between-hops"><span class="secno">4.4</span> <span class="content">State between hops</span></a>
      </ol>
     <li><a href="#standards"><span class="secno">5</span> <span class="content">Standards</span></a>
-    <li><a href="#conformance-classes"><span class="secno">6</span> <span class="content">Conformance classes</span></a>
-    <li><a href="#conformance"><span class="secno"></span> <span class="content">
-    Conformance</span></a>
+    <li>
+     <a href="#conformance"><span class="secno">6</span> <span class="content">Conformance</span></a>
+     <ol class="toc">
+      <li><a href="#conformance-classes"><span class="secno">6.1</span> <span class="content">Conformance classes</span></a>
+      <li><a href="#criteria-checking"><span class="secno">6.2</span> <span class="content">How the criteria are checked</span></a>
+      <li><a href="#criteria-ds"><span class="secno">6.3</span> <span class="content">Criteria for a Data Station</span></a>
+      <li><a href="#criteria-th"><span class="secno">6.4</span> <span class="content">Criteria for a Train Handler</span></a>
+      <li><a href="#criteria-ls"><span class="secno">6.5</span> <span class="content">Criteria for a Linkage Station</span></a>
+      <li><a href="#conformance-statement"><span class="secno">6.6</span> <span class="content">Conformance statement</span></a>
+     </ol>
     <li>
      <a href="#index"><span class="secno"></span> <span class="content">Index</span></a>
      <ol class="toc">
@@ -2236,6 +2252,11 @@ to date with what has since been built, and the following names and ideas change
       <td>—
       <td><strong>Visit Protocol</strong> <a data-link-type="biblio" href="#biblio-fdt-visit-protocol" title="FAIR Data Train — Visit Protocol">[FDT-VISIT-PROTOCOL]</a>
       <td>The Content Interaction Interface of version 0.1 was a heading. It is now a specification: how a train is dispatched, how an agreement is negotiated and signed by both parties on arrival, how every decision is reported, and how a result leaves.
+  
+     <tr>
+      <td>—
+      <td><strong>Conformance criteria</strong>
+      <td>Version 0.1 named no requirement an implementation could be checked against. <a href="#conformance">§ 6 Conformance</a> now defines conforming Data Stations, Train Handlers and Linkage Stations by numbered criteria, each tied to the shape, checker or harness that decides it.
   
      <tr>
       <td>Agreement signed by the station
@@ -2653,47 +2674,231 @@ exercise it.</p>
       <td>declared
 
    </table>
-   <h2 class="heading settled" data-level="6" id="conformance-classes"><span class="secno">6. </span><span class="content">Conformance classes</span><a class="self-link" href="#conformance-classes"></a></h2>
-   <p>This document defines no conformance classes of its own. A <strong>Data Station</strong> conforms to the FAIR
-Data Train architecture when it conforms to the Visit Protocol <a data-link-type="biblio" href="#biblio-fdt-visit-protocol" title="FAIR Data Train — Visit Protocol">[FDT-VISIT-PROTOCOL]</a> as a
-station and publishes the metadata and self-description of <a href="#metadatainterface">§ 3.1.1 Metadata Interface</a> and
-<a href="#stationinterface">§ 3.1.2 Station Interface</a>; a <strong>Train Handler</strong> conforms when it conforms to the Visit Protocol as a
-Handler. Conformance requirements for the other components will be specified in their own
-documents as those are published.</p>
+   <h2 class="heading settled" data-level="6" id="conformance"><span class="secno">6. </span><span class="content">Conformance</span><a class="self-link" href="#conformance"></a></h2>
+   <h3 class="heading settled" data-level="6.1" id="conformance-classes"><span class="secno">6.1. </span><span class="content">Conformance classes</span><a class="self-link" href="#conformance-classes"></a></h3>
+   <p>This document defines conformance for the two components every itinerary needs, and states what
+each must do beyond the Visit Protocol. The key words MUST, MUST NOT, SHOULD and MAY are those of
+<a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a>. The protocol-level requirements — dispatch, negotiation, signatures, checkpoints,
+events, envelopes, hand-over — are the Visit Protocol’s and are collected as numbered criteria
+there <a data-link-type="biblio" href="#biblio-fdt-visit-protocol" title="FAIR Data Train — Visit Protocol">[FDT-VISIT-PROTOCOL]</a>; the criteria below are the architecture’s own and are numbered
+apart so that a conformance claim can cite both without ambiguity.</p>
+   <dl>
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="conforming-data-station">Conforming Data Station</dfn>
+    <dd data-md>
+     <p>A component that conforms to the Visit Protocol as a push-dispatch station or as a
+poll-dispatch station, and meets every criterion of <a href="#criteria-ds">§ 6.3 Criteria for a Data Station</a>.</p>
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="conforming-train-handler">Conforming Train Handler</dfn>
+    <dd data-md>
+     <p>A component that conforms to the Visit Protocol as a Train Handler, and meets every criterion
+of <a href="#criteria-th">§ 6.4 Criteria for a Train Handler</a>.</p>
+    <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="conforming-linkage-station">Conforming Linkage Station</dfn>
+    <dd data-md>
+     <p>A conforming Data Station whose interaction mechanism is identifier translation, and which
+meets every criterion of <a href="#criteria-ls">§ 6.5 Criteria for a Linkage Station</a>.</p>
+   </dl>
+   <p>Conformance for the Individual Gateway, the FDT Registry, the Train Depot and the Alignment
+Station will be specified in their own documents as those are published; their interfaces exist
+today only as OpenAPI documents and fixtures in <code>fdt-commons</code> <a data-link-type="biblio" href="#biblio-fdt-commons" title="fdt-commons — shared contracts of the FAIR Data Train ecosystem: vocabularies, SHACL shapes, JSON Schemas, OpenAPI documents and fixtures">[FDT-COMMONS]</a>, and a claim about
+them is a claim against those artefacts.</p>
+   <h3 class="heading settled" data-level="6.2" id="criteria-checking"><span class="secno">6.2. </span><span class="content">How the criteria are checked</span><a class="self-link" href="#criteria-checking"></a></h3>
+   <p>The criteria below are checked in the three ways the Visit Protocol defines: by <strong>schema</strong> — a
+SHACL shape or JSON Schema in <code>fdt-commons</code> decides it, and the fixtures named are what an
+implementation must accept and the counter-examples it must refuse, each with the message the
+shape carries; by <strong>rule</strong> — a checker in <code>fdt-commons/tools</code> executes it over the fixtures
+named; or by <strong>harness</strong> — a behaviour observable only against a live counterpart, for which no
+third-party-runnable harness is yet published and the reference implementation’s test suites are
+the only published evidence. The artefacts are those pinned by the Visit Protocol’s Appendix B.</p>
+   <h3 class="heading settled" data-level="6.3" id="criteria-ds"><span class="secno">6.3. </span><span class="content">Criteria for a Data Station</span><a class="self-link" href="#criteria-ds"></a></h3>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="ds-1">
+      <td>DS-1
+      <td>A Data Station MUST conform to the Visit Protocol as a push-dispatch station, as a poll-dispatch station, or as both.
+      <td><a href="#contentinteractioninterface">§ 3.1.3 Content Interaction Interface</a>
+      <td>The Visit Protocol’s criteria.
+  
+     <tr id="ds-2">
+      <td>DS-2
+      <td>A Data Station MUST publish a self-description typed <code>fdt-o:DataStation</code> stating its type, the interaction mechanisms it supports, the networks it is a member of with the governance authority of each, the dispatch modes it accepts, the protocol versions it implements and links to its metadata and catalogue; its dispatch endpoint MUST be a <code>dcat:DataService</code> whose <code>dct:conformsTo</code> names the Visit Protocol version.
+      <td><a href="#stationinterface">§ 3.1.2 Station Interface</a>
+      <td>Schema — <code>fdts:StationSelfDescriptionShape</code>, <code>fdts:MembershipShape</code>, <code>fdts:DataServiceShape</code> (<code>station-catalog.shapes.ttl</code>) over the stations of <code>network-and-stations.ttl</code>. Harness for the live document.
+  
+     <tr id="ds-3">
+      <td>DS-3
+      <td>A Data Station MUST publish a catalogue typed <code>fdt-o:StationCatalog</code>, published by itself, listing the hosted datasets (<code>fdt-o:HostedDataset</code>) it serves and the parts (<code>fdt-o:DatasetPart</code>) a controller offers in their own right; every dataset and part MUST carry at least one distribution per interaction mechanism it is reachable by, an ODRL offer by its controller, and a <code>dcat:theme</code> that is a concept IRI.
+      <td><a href="#metadatainterface">§ 3.1.1 Metadata Interface</a>
+      <td>Schema — <code>fdts:StationCatalogShape</code>, <code>fdts:DatasetShape</code>, <code>fdts:DatasetPartShape</code>, <code>fdts:GovernedDataThemeShape</code>, <code>fdts:MechanismDistributionShape</code>, refusing <code>dataset-without-offer.ttl</code>, <code>dataset-part-without-offer.ttl</code>, <code>theme-written-as-a-keyword.ttl</code>, <code>offer-whose-target-no-graph-describes.ttl</code> (<code>published-graph.shapes.ttl</code>).
+  
+     <tr id="ds-4">
+      <td>DS-4
+      <td>For every dataset and part a Data Station MUST publish what its data conforms to — at least one SHACL node shape named by <code>dct:conformsTo</code> — and MUST serve those shapes beside the catalogue, so that a train’s data requirement can be matched against them by structural coverage.
+      <td><a href="#metadatainterface">§ 3.1.1 Metadata Interface</a>, <a href="#registry">§ 3.4 FDT Registry</a>
+      <td>Schema — <code>fdts:DatasetShape</code> refusing <code>dataset-without-a-shape.ttl</code>. Rule — <code>coverage.py check</code> against <code>tests/coverage-expectations.json</code>, which records the misses as well as the hits.
+  
+     <tr id="ds-5">
+      <td>DS-5
+      <td>A Data Station MUST follow the FAIR Data Point specification for the structure and navigation of its metadata.
+      <td><a href="#metadatainterface">§ 3.1.1 Metadata Interface</a>
+      <td>Harness.
+  
+     <tr id="ds-6">
+      <td>DS-6
+      <td>Publishing a catalogue entry MUST grant nothing: a Data Station MUST negotiate every access on arrival against the controller’s offer, per visit.
+      <td><a href="#metadatainterface">§ 3.1.1 Metadata Interface</a>, <a href="#agreements">§ 4.2 Agreements, per visit, signed by both parties</a>
+      <td>Harness (the Visit Protocol’s negotiation criteria).
+  
+     <tr id="ds-7">
+      <td>DS-7
+      <td>A Data Station MUST evaluate the controller’s offers for the network a visit runs under and for no other, MUST record that network in every agreement, and MUST verify a dispatching party’s credential against the identity providers that network trusts.
+      <td><a href="#networks">§ 3.7 Networks and governance</a>
+      <td>Schema — <code>fdts:PolicyCommonShape</code> (<code>fdt-p:underNetwork</code> required of every offer, request and agreement). Harness.
+  
+     <tr id="ds-8">
+      <td>DS-8
+      <td>In a network that states a station in it may not conclude a negotiation without a person, a Data Station MUST neither grant nor refuse by machine: it MUST evaluate, produce a recommendation with its evidence, and put the case to a person.
+      <td><a href="#networks">§ 3.7 Networks and governance</a>
+      <td>Schema — <code>fdts:NetworkShape</code> refusing <code>network-that-does-not-say-who-may-decide.ttl</code>; the decision shapes of <code>policy.shapes.ttl</code> refusing <code>automatic-agreement-naming-a-decider.ttl</code>, <code>human-decision-with-nothing-to-review.ttl</code>. Harness.
+  
+     <tr id="ds-9">
+      <td>DS-9
+      <td>A Data Station MUST resolve a train at its Depot before anything runs and verify that the payload it was handed is the one the Depot describes; it MUST treat a train as an executable asset and MUST NOT treat it as a <code>dcat:Dataset</code>.
+      <td><a href="#depot">§ 3.5 Train Depot</a>, <a href="#components">§ 3 Components</a>
+      <td>Schema — <code>fdts:TrainOfferShape</code> refusing <code>train-typed-as-dataset.ttl</code>. Rule — <code>payloads.py check</code>.
+  
+     <tr id="ds-10">
+      <td>DS-10
+      <td>A Data Station MUST enforce policy at the three checkpoints and MUST emit every decision it takes as an event with a justification; it MUST NOT change the state of a visit silently.
+      <td><a href="#contentinteractioninterface">§ 3.1.3 Content Interaction Interface</a>, <a href="#dispatch">§ 4.3 Dispatch, checkpoints and outcomes</a>
+      <td>The Visit Protocol’s criteria.
+  
+     <tr id="ds-11">
+      <td>DS-11
+      <td>Record-level data MUST NOT leave a Data Station except to another station, under an agreement, by location and digest; it MUST NOT appear in a result, an artefact, an event or a justification.
+      <td><a href="#trainhandler">§ 3.2 Train Handler</a>, <a href="#state-between-hops">§ 4.4 State between hops</a>
+      <td>Schema — <code>fdts:VisitShape</code> refusing <code>visit-record-level-onward.ttl</code>. Rule — <code>inspection.py check</code> refusing <code>record-level-onward.json</code>.
+  
+     <tr id="ds-12">
+      <td>DS-12
+      <td>A Data Station MUST report every visit’s outcome in one of the seven words of <a href="#dispatch">§ 4.3 Dispatch, checkpoints and outcomes</a>, exactly, in its events, envelopes, logs and user interfaces.
+      <td><a href="#dispatch">§ 4.3 Dispatch, checkpoints and outcomes</a>
+      <td>The Visit Protocol’s criteria.
+
+   </table>
+   <h3 class="heading settled" data-level="6.4" id="criteria-th"><span class="secno">6.4. </span><span class="content">Criteria for a Train Handler</span><a class="self-link" href="#criteria-th"></a></h3>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="th-1">
+      <td>TH-1
+      <td>A Train Handler MUST conform to the Visit Protocol as a Train Handler.
+      <td><a href="#trainhandler">§ 3.2 Train Handler</a>
+      <td>The Visit Protocol’s criteria.
+  
+     <tr id="th-2">
+      <td>TH-2
+      <td>Every plan a Train Handler runs MUST conform to the run-description shapes: a train, its parameter values, an itinerary with its pattern, a failure policy, an approval wait in days or less, and the consumer’s purpose as a request template; an open-ended pattern MUST carry a budget and a stop condition; a two-phase plan MUST carry the condition that selects the second phase’s stations.
+      <td><a href="#plan-run-visit">§ 4.1 Plan, run, visit</a>
+      <td>Schema — <code>fdts:PlanShape</code>, <code>fdts:ItineraryShape</code>, <code>fdts:OpenEndedItineraryShape</code>, <code>fdts:TwoPhaseItineraryShape</code>, <code>fdts:FailurePolicyShape</code> (<code>run.shapes.ttl</code>) over the plans of <code>trains-and-plans.ttl</code> and the <code>plan-*.jsonld</code> fixtures, refusing <code>plan-discovery-without-budget.ttl</code>, <code>two-phase-whose-second-phase-selects-nobody.ttl</code>, <code>plan-approval-wait-of-one-month.ttl</code>, <code>plan-approval-wait-typed-xsd-duration.ttl</code>.
+  
+     <tr id="th-3">
+      <td>TH-3
+      <td>A station selector MUST state the data a station must hold, as a SHACL model, and a Train Handler MUST select stations by structural coverage of that requirement by the shapes each station publishes — acting on what a station publishes, never on a registry’s entry alone.
+      <td><a href="#registry">§ 3.4 FDT Registry</a>, <a href="#plan-run-visit">§ 4.1 Plan, run, visit</a>
+      <td>Schema — <code>fdts:StationSelectorShape</code> refusing <code>selector-without-data-requirement.ttl</code>. Rule — <code>coverage.py check</code> against <code>tests/coverage-expectations.json</code>. Harness.
+  
+     <tr id="th-4">
+      <td>TH-4
+      <td>A Train Handler MUST dispatch query and API trains orchestrated only.
+      <td><a href="#state-between-hops">§ 4.4 State between hops</a>
+      <td>Schema — <code>fdts:QueryTrainCoordinationShape</code> refusing <code>plan-query-train-choreographed.ttl</code>.
+  
+     <tr id="th-5">
+      <td>TH-5
+      <td>A Train Handler MUST resolve a train at its Depot and dispatch only a train its owner holds under the creator’s licence, concluded as a two-party agreement signed by the creator and by the owner; it MUST NOT dispatch a withdrawn train.
+      <td><a href="#depot">§ 3.5 Train Depot</a>
+      <td>Schema — <code>train-offer.shapes.ttl</code> (<code>fdts:TrainOfferShape</code> and the withdrawal shape of ADR-036) over <code>train-taken.ttl</code>, refusing <code>train-taken-from-someone-who-did-not-write-it.ttl</code>, <code>train-offer-assigned-by-its-depot.ttl</code>, <code>train-withdrawn-by-nobody.ttl</code>; Rule — <code>derivation.py</code> refusing <code>depot-signed-the-creators-side.ttl</code>. The Depot interface itself is specified only by <code>train-depot-api.yaml</code> and <code>protocol/train-publication.md</code> until its document is published.
+  
+     <tr id="th-6">
+      <td>TH-6
+      <td>A Train Handler MUST hold non-personal, aggregate results only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store record-level data.
+      <td><a href="#trainhandler">§ 3.2 Train Handler</a>
+      <td>The Visit Protocol’s criteria. Harness.
+  
+     <tr id="th-7">
+      <td>TH-7
+      <td>A Train Handler MUST produce a completeness statement for every run that did not deliver from every intended station, naming every intended station and, for each, its outcome in the seven words verbatim, its cause and the station’s stated reason.
+      <td><a href="#trainhandler">§ 3.2 Train Handler</a>, <a href="#dispatch">§ 4.3 Dispatch, checkpoints and outcomes</a>
+      <td>Schema — <code>fdts:RunShape</code>, <code>fdts:CompletenessShape</code> refusing <code>run-partial-without-completeness.ttl</code>; <code>run-state.schema.json</code> over <code>run-state-two-phase.json</code>. Harness.
+  
+     <tr id="th-8">
+      <td>TH-8
+      <td>A Train Handler MUST record each run as PROV-O provenance: the run an activity, its visits sub-activities, the merged result a derivation from the delivered visits.
+      <td><a href="#trainhandler">§ 3.2 Train Handler</a>, <a href="#standards">§ 5 Standards</a>
+      <td>Harness. No shape in <code>fdt-commons</code> 0.75.0 constrains the run record beyond <code>fdts:RunShape</code>; this is a recorded gap of the conformance material.
+  
+     <tr id="th-9">
+      <td>TH-9
+      <td>A Train Handler MUST visit under its own credential, issued by a provider the visit’s network trusts, and MUST NOT forward a consumer’s credential to a station.
+      <td><a href="#networks">§ 3.7 Networks and governance</a>
+      <td>The Visit Protocol’s criteria.
+
+   </table>
+   <h3 class="heading settled" data-level="6.5" id="criteria-ls"><span class="secno">6.5. </span><span class="content">Criteria for a Linkage Station</span><a class="self-link" href="#criteria-ls"></a></h3>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="ls-1">
+      <td>LS-1
+      <td>A Linkage Station MUST be typed <code>fdt-o:LinkageStation</code> in addition to <code>fdt-o:DataStation</code>, MUST publish a catalogue, and MUST publish a <code>dcat:DataService</code> declaring the identifier-translation mechanism.
+      <td><a href="#linkage">§ 3.6 Linkage and Alignment Stations</a>
+      <td>Schema — <code>fdts:LinkageStationServiceShape</code> refusing <code>linkage-station-that-publishes-no-catalogue.ttl</code>, <code>linkage-station-that-publishes-no-translation-service.ttl</code>.
+  
+     <tr id="ls-2">
+      <td>LS-2
+      <td>A Linkage Station MUST be visited as a hop under its own agreement, through the Visit Protocol.
+      <td><a href="#linkage">§ 3.6 Linkage and Alignment Stations</a>, <a href="#agreements">§ 4.2 Agreements, per visit, signed by both parties</a>
+      <td>Schema — <code>visit-descriptor-ttg-hop3.json</code>, <code>visit-result-ttg-hop2.json</code>. Harness.
+  
+     <tr id="ls-3">
+      <td>LS-3
+      <td>A translation MUST return the identifiers of one pseudonym space only and never the pair, in an order that discloses no correspondence with the order asked, and the count it reports MUST be the count it released.
+      <td><a href="#linkage">§ 3.6 Linkage and Alignment Stations</a>
+      <td>Schema — <code>translation-envelope.schema.json</code> over <code>translation-result-ttg-hop2.json</code>. Rule — <code>inspection.py check</code> refusing <code>translation-that-returns-the-space-it-was-given.json</code>, <code>translation-in-the-order-it-was-asked.json</code>, <code>translation-whose-count-is-not-what-it-released.json</code>.
+  
+     <tr id="ls-4">
+      <td>LS-4
+      <td>A Linkage Station MUST hand translated state to the next station by location and digest and never by value.
+      <td><a href="#state-between-hops">§ 4.4 State between hops</a>
+      <td>The Visit Protocol’s criteria (<code>onward.handedOverDigest</code>, the inbound rules).
+
+   </table>
+   <h3 class="heading settled" data-level="6.6" id="conformance-statement"><span class="secno">6.6. </span><span class="content">Conformance statement</span><a class="self-link" href="#conformance-statement"></a></h3>
+   <p>An implementation claims conformance to this architecture by stating the class claimed, the
+Visit Protocol conformance statement it rests on, the <code>fdt-commons</code> version and commit it was
+validated against, and, for each criterion above, that it accepts the fixtures named and refuses
+the counter-examples named with their recorded messages, or the evidence it offers where only a
+harness can decide. The reference implementation is the only implementation that can make a
+third-party-verified claim today, and this document says so rather than imply otherwise.</p>
   </main>
-  <div data-fill-with="conformance">
-   <h2 class="heading no-num no-ref settled" id="conformance"><span class="content">
-    Conformance</span><a class="self-link" href="#conformance"></a></h2>
-   <p>
-            Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119 terminology.
-            The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL”
-            in the normative parts of this document
-            are to be interpreted as described in RFC 2119.
-            However, for readability,
-            these words do not appear in all uppercase letters in this specification.
-
-        </p>
-   <p>
-            All of the text of this specification is normative
-            except sections explicitly marked as non-normative, examples, and notes. <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a>
-
-        </p>
-   <p>
-            Examples in this specification are introduced with the words “for example”
-            or are set apart from the normative text with <code>class="example"</code>, like this:
-
-        </p>
-   <div class="example" id="example-example"><a class="self-link" href="#example-example"></a>
-            This is an example of an informative example.
-        </div>
-   <p>
-            Informative notes begin with the word “Note”
-            and are set apart from the normative text with <code>class="note"</code>, like this:
-
-        </p>
-   <p class="note" role="note">
-            Note, this is an informative note.</p>
-  </div>
 <script>
 (function() {
   "use strict";
@@ -2827,6 +3032,9 @@ documents as those are published.</p>
   <h3 class="heading no-num no-ref settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
    <li><a href="#alignment-station">Alignment Station</a><span>, in § 3</span>
+   <li><a href="#conforming-data-station">Conforming Data Station</a><span>, in § 6.1</span>
+   <li><a href="#conforming-linkage-station">Conforming Linkage Station</a><span>, in § 6.1</span>
+   <li><a href="#conforming-train-handler">Conforming Train Handler</a><span>, in § 6.1</span>
    <li><a href="#content-interaction-interface">Content Interaction Interface</a><span>, in § 3.1</span>
    <li><a href="#data-consumer">Data Consumer</a><span>, in § 2</span>
    <li><a href="#data-controller">Data Controller</a><span>, in § 2</span>
@@ -3119,6 +3327,9 @@ function parseHTML(markup) {
 {
 let dfnPanelData = {
 "alignment-station": {"dfnID":"alignment-station","dfnText":"Alignment Station","external":false,"refSections":[],"url":"#alignment-station"},
+"conforming-data-station": {"dfnID":"conforming-data-station","dfnText":"Conforming Data Station","external":false,"refSections":[],"url":"#conforming-data-station"},
+"conforming-linkage-station": {"dfnID":"conforming-linkage-station","dfnText":"Conforming Linkage Station","external":false,"refSections":[],"url":"#conforming-linkage-station"},
+"conforming-train-handler": {"dfnID":"conforming-train-handler","dfnText":"Conforming Train Handler","external":false,"refSections":[],"url":"#conforming-train-handler"},
 "content-interaction-interface": {"dfnID":"content-interaction-interface","dfnText":"Content Interaction\nInterface","external":false,"refSections":[],"url":"#content-interaction-interface"},
 "data-consumer": {"dfnID":"data-consumer","dfnText":"Data Consumer","external":false,"refSections":[],"url":"#data-consumer"},
 "data-controller": {"dfnID":"data-controller","dfnText":"Data Controller","external":false,"refSections":[],"url":"#data-controller"},

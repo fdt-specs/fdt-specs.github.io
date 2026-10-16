@@ -1497,8 +1497,17 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://specs.fairdatatrain.org/visit-protocol/" rel="canonical">
-  <meta content="47e285bf5356ecac2cb23f4ec2d5d4c309898048" name="revision">
+  <meta content="38924aeb5e5f563766759c765da7ea6c12f47a4b" name="revision">
   <meta content="dark light" name="color-scheme">
+<style>
+/* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
+table.criteria { table-layout: fixed; width: 100%; }
+table.criteria th, table.criteria td { text-align: left; vertical-align: top; padding: .5em .6em; }
+table.criteria th:first-child, table.criteria td:first-child { width: 4.5em; white-space: nowrap; font-weight: bold; }
+table.criteria th:nth-child(2), table.criteria td:nth-child(2) { width: 42%; }
+table.criteria th:nth-child(3), table.criteria td:nth-child(3) { width: 12%; }
+table.criteria td code { overflow-wrap: anywhere; }
+</style>
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
@@ -2268,7 +2277,22 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <li><a href="#scope"><span class="secno">1.1</span> <span class="content">Scope</span></a>
       <li><a href="#reading"><span class="secno">1.2</span> <span class="content">Reading this document</span></a>
      </ol>
-    <li><a href="#conformance-classes"><span class="secno">2</span> <span class="content">Conformance classes</span></a>
+    <li>
+     <a href="#conformance"><span class="secno">2</span> <span class="content">Conformance</span></a>
+     <ol class="toc">
+      <li><a href="#conformance-classes"><span class="secno">2.1</span> <span class="content">Conformance classes</span></a>
+      <li><a href="#criteria-reading"><span class="secno">2.2</span> <span class="content">How the criteria are stated</span></a>
+      <li>
+       <a href="#criteria"><span class="secno">2.3</span> <span class="content">Criteria</span></a>
+       <ol class="toc">
+        <li><a href="#criteria-station"><span class="secno">2.3.1</span> <span class="content">Every Data Station</span></a>
+        <li><a href="#criteria-push"><span class="secno">2.3.2</span> <span class="content">A push-dispatch station</span></a>
+        <li><a href="#criteria-poll"><span class="secno">2.3.3</span> <span class="content">A poll-dispatch station</span></a>
+        <li><a href="#criteria-handler"><span class="secno">2.3.4</span> <span class="content">A Train Handler</span></a>
+       </ol>
+      <li><a href="#conformance-optional"><span class="secno">2.4</span> <span class="content">Optional features</span></a>
+      <li><a href="#conformance-statement"><span class="secno">2.5</span> <span class="content">Conformance statement</span></a>
+     </ol>
     <li><a href="#terminology"><span class="secno">3</span> <span class="content">Terminology</span></a>
     <li><a href="#parties"><span class="secno">4</span> <span class="content">Parties and identifiers</span></a>
     <li><a href="#overview"><span class="secno">5</span> <span class="content">Overview of a visit</span></a>
@@ -2339,8 +2363,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li><a href="#examples"><span class="secno"></span> <span class="content">Appendix A: Examples</span></a>
     <li><a href="#artefacts"><span class="secno"></span> <span class="content">Appendix B: Normative artefacts</span></a>
     <li><a href="#changes"><span class="secno"></span> <span class="content">Appendix C: Change history</span></a>
-    <li><a href="#conformance"><span class="secno"></span> <span class="content">
-    Conformance</span></a>
     <li>
      <a href="#index"><span class="secno"></span> <span class="content">Index</span></a>
      <ol class="toc">
@@ -2393,40 +2415,569 @@ leaves open are listed in <a href="#open">§ 17 Open points</a> with their reg
 default that implementations follow until it is decided.</p>
    <p>Member names in message tables are written as <code>camelCase</code> JSON keys. Where a value is an IRI, it
 is a string in the JSON and an IRI in the vocabulary the schema maps it to.</p>
-   <h2 class="heading settled" data-level="2" id="conformance-classes"><span class="secno">2. </span><span class="content">Conformance classes</span><a class="self-link" href="#conformance-classes"></a></h2>
-   <p>Three conformance classes are defined. The requirements are stated in the body of this document
-with the key words of <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a> and collected here.</p>
+   <h2 class="heading settled" data-level="2" id="conformance"><span class="secno">2. </span><span class="content">Conformance</span><a class="self-link" href="#conformance"></a></h2>
+   <h3 class="heading settled" data-level="2.1" id="conformance-classes"><span class="secno">2.1. </span><span class="content">Conformance classes</span><a class="self-link" href="#conformance-classes"></a></h3>
+   <p>Three conformance classes are defined. The key words MUST, MUST NOT, SHOULD and MAY in this
+document are to be interpreted as described in <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a>. The requirements are stated in the
+body of this document and <a href="#criteria">§ 2.3 Criteria</a> collects them as numbered criteria, so that an
+implementation can be checked against a list and a claim of conformance can say which item it
+rests on. Where a criterion and the body text differ, the body text and the artefacts of
+<a href="#artefacts">Appendix B: Normative artefacts</a> govern and the criterion has an error to be reported.</p>
    <dl>
     <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="push-dispatch-station">Push-dispatch station</dfn>
     <dd data-md>
-     <p>A Data Station that accepts inbound connections. It MUST implement the Station API
-(<a href="#station-api">§ 13 Station API</a>) — at least <code>/</code>, <code>POST /visits</code>, <code>GET /visits/{visitId}</code>,
-<code>GET /visits/{visitId}/events</code>, <code>GET /visits/{visitId}/result</code>, <code>POST /visits/{visitId}/cancel</code>
-and <code>POST /visits/{visitId}/agreement/signature</code>; MUST validate descriptors and embedded ODRL
-requests against the schemas and shapes of <a href="#artefacts">Appendix B: Normative artefacts</a>; MUST verify the payload digest
-against the train’s depot offer before anything runs; MUST emit every decision as an event with
-a justification; MUST sign the assigner’s side of every agreement it concludes and MUST run
-nothing under an agreement that does not carry the assignee’s signature; MUST NOT let
-record-level content into an envelope; and, when it receives a hand-over, MUST check the
-lineage rule of <a href="#inbound">§ 9.2 What arrives</a> before fetching anything.</p>
+     <p>A Data Station that accepts inbound connections. It implements the Station API
+(<a href="#station-api">§ 13 Station API</a>) as a server, and meets every criterion of <a href="#criteria-station">§ 2.3.1 Every Data Station</a> and
+<a href="#criteria-push">§ 2.3.2 A push-dispatch station</a>.</p>
     <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="poll-dispatch-station">Poll-dispatch station</dfn>
     <dd data-md>
-     <p>A Data Station that accepts no inbound connection. It MUST implement the poll half of the
-Handler API as a client (<a href="#handler-api">§ 14 Handler API — the station-facing surface</a>) — <code>GET /stations/{stationId}/pending-visits</code>,
-<code>POST /visits/{visitId}/ack</code>, <code>POST /visits/{visitId}/events</code>, <code>PUT /visits/{visitId}/result</code>
-and <code>POST /visits/{visitId}/agreement</code> — and otherwise meets every requirement of a
-push-dispatch station. It MUST report by callback, that being the only direction it can open.</p>
+     <p>A Data Station that accepts no inbound connection. It implements the poll half of the Handler
+API (<a href="#handler-api">§ 14 Handler API — the station-facing surface</a>) as a client, reports by callback, and meets every criterion of
+<a href="#criteria-station">§ 2.3.1 Every Data Station</a> and <a href="#criteria-poll">§ 2.3.3 A poll-dispatch station</a>.</p>
     <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="Train Handler (conformance class)" id="train-handler-conformance-class">Train Handler</dfn> (conformance class)
     <dd data-md>
-     <p>A Handler MUST mint the visit IRI of every visit and use it as the idempotency key; MUST embed
-an ODRL request valid against <code>fdts:RequestShape</code> or an existing agreement IRI; MUST honour the
-plan’s <code>approvalWait</code> and failure policy; MUST verify the assigner’s signature over the stated
-digest before signing the assignee’s side, and MUST refuse to sign a document the station never
-signed; MUST de-duplicate events on <code>id</code> and order them on <code>sequence</code>; MUST name
-<code>handOver.fromVisit</code> in the same descriptor’s <code>precededBy</code> whenever it carries a hand-over; MUST
-assemble the run record and completeness statement from envelopes and events only; and MUST
-hold non-personal, aggregate results only (ADR-015).</p>
+     <p>The consumer-side party: the client of the Station API and the server of the Handler API. It
+meets every criterion of <a href="#criteria-handler">§ 2.3.4 A Train Handler</a>.</p>
    </dl>
+   <p>A station MAY be both a push-dispatch and a poll-dispatch station; its self-description says
+which modes it accepts and the Handler chooses per station (<a href="#dispatch-poll">§ 6.2 Poll dispatch</a>).</p>
+   <h3 class="heading settled" data-level="2.2" id="criteria-reading"><span class="secno">2.2. </span><span class="content">How the criteria are stated</span><a class="self-link" href="#criteria-reading"></a></h3>
+   <p>Each criterion has a stable identifier, which a conformance claim and a test report cite; the
+requirement, with its key word; the section of this document that states it; and the way it is
+checked:</p>
+   <dl>
+    <dt data-md>Schema
+    <dd data-md>
+     <p>A JSON Schema or SHACL shape of <a href="#artefacts">Appendix B: Normative artefacts</a> decides it. The fixtures named are the
+published examples the implementation must accept and the counter-examples it must refuse —​each counter-example <strong>with the message the shape carries</strong>, as <code>tests/expectations.json</code>
+in <code>fdt-commons</code> records it. <code>python3 tests/validate.py</code> runs every one of them.</p>
+    <dt data-md>Rule
+    <dd data-md>
+     <p>A checker in <code>fdt-commons/tools</code> executes the rule over the fixtures named — the agreement
+derivation (<code>derivation.py</code>), result inspection (<code>inspection.py</code>), the canonical form
+(<code>canonical.py</code>) and payload digests (<code>payloads.py</code>). An implementation is held to the same
+verdict over the same fixtures.</p>
+    <dt data-md>Harness
+    <dd data-md>
+     <p>The requirement is a behaviour observable only against a live counterpart — a station needs a
+Handler to dispatch to it, a Handler needs a station to answer — and no document decides it.
+These criteria are checked by a conformance harness that drives one side of the protocol
+and observes the other. <strong>That harness is not yet published</strong>; until it is, the reference
+implementation’s test suites are the only published evidence for these rows, and a third
+party’s claim over them is self-asserted (<a href="#conformance-statement">§ 2.5 Conformance statement</a>).</p>
+   </dl>
+   <p>The fixtures are in <code>examples/</code> (Turtle, validated by shape), <code>examples/invalid/</code> (Turtle
+counter-examples, each refused with its recorded message), <code>examples/protocol/</code> (JSON, validated
+by schema) and <code>examples/protocol/invalid/</code> (JSON counter-examples), all at the commit
+<a href="#artefacts">Appendix B: Normative artefacts</a> pins. A criterion whose check names a shape that no fixture exercises would be a
+rule that can be deleted with every light still green, so every schema and rule row names at
+least one fixture.</p>
+   <h3 class="heading settled" data-level="2.3" id="criteria"><span class="secno">2.3. </span><span class="content">Criteria</span><a class="self-link" href="#criteria"></a></h3>
+   <h4 class="heading settled" data-level="2.3.1" id="criteria-station"><span class="secno">2.3.1. </span><span class="content">Every Data Station</span><a class="self-link" href="#criteria-station"></a></h4>
+   <p>These criteria bind a push-dispatch station and a poll-dispatch station alike. "Rejects" means the
+visit ends <strong>Rejected</strong> at the checkpoint named, with <code>visit.rejected</code> carrying <code>reason</code> and
+<code>justification</code>; "refuses" means <strong>Refused</strong>, the controller’s word, at NEG.</p>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="sta-1">
+      <td>STA-1
+      <td>A station MUST publish a self-description stating its type, the interaction mechanisms it supports, its network memberships, the dispatch mode or modes it accepts and the protocol versions it implements, in which its dispatch endpoint is a <code>dcat:DataService</code> whose <code>dct:conformsTo</code> is <code>https://w3id.org/fdt/visit-protocol/v1</code> and whose <code>dcat:endpointURL</code> is the base URL of the Station API.
+      <td><a href="#parties">§ 4 Parties and identifiers</a>, <a href="#dispatch-poll">§ 6.2 Poll dispatch</a>
+      <td>Schema — <code>fdts:StationSelfDescriptionShape</code>, <code>fdts:MembershipShape</code>, <code>fdts:DataServiceShape</code> (<code>station-catalog.shapes.ttl</code>) over the stations of <code>network-and-stations.ttl</code>. Harness for the live document.
+  
+     <tr id="sta-2">
+      <td>STA-2
+      <td>A station MUST verify the dispatching party’s credential against the identity providers it trusts <strong>for the visit’s network</strong>, and MUST answer <code>401</code> — not an outcome word — when the credential is missing or untrusted.
+      <td><a href="#security-credential">§ 15.1 Credentials</a>
+      <td>Harness.
+  
+     <tr id="sta-3">
+      <td>STA-3
+      <td>At PEP 1 a station MUST validate the descriptor against the visit-descriptor schema and the embedded <code>odrl:Request</code> against <code>fdts:RequestShape</code>, and MUST reject a visit that fails either.
+      <td><a href="#negotiation-request">§ 7.1 Request or agreement</a>, <a href="#descriptor">§ 12.1 Visit descriptor</a>
+      <td>Schema — <code>visit-descriptor.schema.json</code> over <code>visit-descriptor-gd-m1.json</code>, <code>visit-descriptor-ttg-hop3.json</code>; <code>fdts:RequestShape</code> refusing <code>request-without-network.ttl</code>, <code>request-without-purpose.ttl</code>, <code>request-without-train.ttl</code>.
+  
+     <tr id="sta-4">
+      <td>STA-4
+      <td>A station MUST reject at PEP 1 a descriptor whose <code>consumer.party</code> and whose request’s <code>odrl:assignee</code> name different parties.
+      <td><a href="#negotiation-request">§ 7.1 Request or agreement</a>
+      <td>Harness. The consequence an agreement would carry is caught by Rule — <code>derivation.py</code> over <code>agreement-binds-a-party-who-never-asked.ttl</code>.
+  
+     <tr id="sta-5">
+      <td>STA-5
+      <td>Before anything runs a station MUST verify that <code>payload.digest</code> equals the <code>fdt-o:artifactDigest</code> of the train’s offer in its Depot, and that the payload bytes it holds hash to that digest; a mismatch rejects at PEP 1.
+      <td><a href="#descriptor">§ 12.1 Visit descriptor</a>, <a href="#security-transport">§ 15.2 Transport and integrity</a>
+      <td>Rule — <code>payloads.py check</code>: <code>visit-descriptor-ttg-hop1-wrong-digest.json</code> is schema-valid on purpose and only the digest check can tell it from <code>visit-descriptor-ttg-hop1.json</code>.
+  
+     <tr id="sta-6">
+      <td>STA-6
+      <td>A station MUST reject at PEP 1 a visit whose train mechanism it does not support (<code>415</code> under push).
+      <td><a href="#dispatch-push">§ 6.1 Push dispatch</a>, <a href="#overview">§ 5 Overview of a visit</a>
+      <td>Harness.
+  
+     <tr id="sta-7">
+      <td>STA-7
+      <td>A station MUST reject a descriptor whose <code>consumer.presentation</code> carries <code>assurance</code> or <code>exchange</code>; it MUST grade the credential itself and record the grade in every event’s <code>requester.assurance</code> — <code>presented-and-verified</code>, with the <code>exchange</code> it established, or <code>presented-only</code>.
+      <td><a href="#security-credential">§ 15.1 Credentials</a>, <a href="#presentation-message">§ 12.4 Presentation</a>
+      <td>Schema — the ADR-044 mutations of <code>tests/validate_protocol.py</code> over <code>visit-descriptor-gd-m1.json</code>; <code>visit.received</code> and <code>visit.rejected</code> MUST carry <code>requester</code> (<code>visit-event.schema.json</code>). Harness for the grading.
+  
+     <tr id="sta-8">
+      <td>STA-8
+      <td>A station MUST NOT treat any claim of an exchanged token beyond its subject and actor as evidence in the negotiation, and MUST NOT record one.
+      <td><a href="#security-credential">§ 15.1 Credentials</a>
+      <td>Harness — the <code>evidence</code> of the negotiation events.
+  
+     <tr id="sta-9">
+      <td>STA-9
+      <td>Event IRIs MUST be unique and MUST be minted by the station; <code>sequence</code> MUST be monotonic per visit and attempt.
+      <td><a href="#parties">§ 4 Parties and identifiers</a>, <a href="#event">§ 12.2 Visit event</a>
+      <td>Schema — <code>visit-event.schema.json</code>; <code>tests/validate_protocol.py</code> checks the published streams for one event per IRI. Harness for a live stream.
+  
+     <tr id="sta-10">
+      <td>STA-10
+      <td>With a request, a station MUST emit <code>negotiation.requested</code> first and MUST match the request against the controller’s offers <strong>for the visit’s network</strong> and the station owner’s policy, and against nothing else.
+      <td><a href="#negotiation-request">§ 7.1 Request or agreement</a>
+      <td>Harness.
+  
+     <tr id="sta-11">
+      <td>STA-11
+      <td>A station MUST emit <code>negotiation.matched</code> only when the offer and the request are satisfiable, and it MUST carry a <code>justification</code>.
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>
+      <td>Schema — <code>visit-event.schema.json</code> (<code>negotiation.matched</code> requires <code>justification</code>); <code>visit-events-gd-m1.json</code>. Harness for the condition.
+  
+     <tr id="sta-12">
+      <td>STA-12
+      <td>Where a person must decide, a station MUST emit <code>negotiation.pending-approval</code> carrying an <code>approval</code> object that names the controller, the <code>mode</code>, the <code>rule</code> that imposed it, its <code>recommendation</code> and the facts it could not establish. Where a machine may not grant it MUST NOT refuse either: the visit goes from <code>negotiation.requested</code> to <code>negotiation.pending-approval</code> without a <code>negotiation.matched</code>.
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>
+      <td>Schema — <code>visit-event.schema.json</code> (<code>negotiation.pending-approval</code> requires <code>approval</code>); <code>approval-by-controller-preference.json</code>, <code>approval-inconclusive-evaluation.json</code>; refusing <code>approval-in-an-evaluating-mode-with-no-recommendation.json</code>, <code>approval-that-names-a-rule-nothing-imposed.json</code>. Harness for ADR-032.
+  
+     <tr id="sta-13">
+      <td>STA-13
+      <td>A refusal MUST be emitted as <code>negotiation.refused</code> with <code>reason</code> and <code>justification</code> and the state <code>Refused</code>, and MUST NOT be reported in any other word; a station’s own failure MUST NOT be reported as a refusal.
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>, <a href="#outcomes">§ 11 Outcomes, cancellation, retries, revocation</a>
+      <td>Schema — <code>visit-events-gd-m1-refused.json</code>, <code>visit-events-gd-m1-failed.json</code>; refusing <code>visit-refusal-reported-as-a-failure.json</code>, <code>visit-failure-reported-as-a-refusal.json</code>.
+  
+     <tr id="sta-14">
+      <td>STA-14
+      <td>A pending visit that is withdrawn because nobody decided MUST end <strong>TimedOut</strong> with <code>negotiation.withdrawn</code>, and MUST NOT be reported as Refused or Rejected. A station MAY apply its own timeout, stated as <code>approval.expiresAt</code>.
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>, <a href="#outcomes-cancel">§ 11.1 Cancellation</a>
+      <td>Harness.
+  
+     <tr id="sta-15">
+      <td>STA-15
+      <td>A station MUST derive the agreement from the offer, the request and the visit by the six rules of <a href="#negotiation-derivation">§ 7.3 Derivation of the agreement</a>: exactly the actions requested that the offer permits; every usage constraint, bounded by what was offered; the offer’s prohibitions and duties verbatim; one <code>fdt-p:evidence</code> per eligibility constraint; the three digests pinned; the offer’s assigner, the request’s assignee and the visit’s target and network. It MUST refuse when no action survives, naming the rule, and MAY narrow further but MUST NOT widen.
+      <td><a href="#negotiation-derivation">§ 7.3 Derivation of the agreement</a>
+      <td>Rule — <code>derivation.py check</code> over every agreement in <code>examples/</code>, refusing <code>agreement-grants-more-than-offered.ttl</code>, <code>agreement-binds-a-party-who-never-asked.ttl</code>, <code>agreement-changed-after-it-was-signed.ttl</code>. Schema — <code>fdts:AgreementShape</code> refusing <code>agreement-missing-assignee.ttl</code>, <code>agreement-without-an-authorisation-mode.ttl</code>.
+  
+     <tr id="sta-16">
+      <td>STA-16
+      <td>Given an agreement IRI instead of a request, a station MUST verify that the agreement is active, that its target and assignee match the visit and that it was concluded at this station, and MUST reject at PEP 2 otherwise; on a retry it MUST reuse the agreement rather than negotiate anew.
+      <td><a href="#negotiation-request">§ 7.1 Request or agreement</a>, <a href="#dispatch-idempotency">§ 6.4 Idempotency, attempts and withdrawal</a>
+      <td>Harness.
+  
+     <tr id="sta-17">
+      <td>STA-17
+      <td>A station MUST sign the assigner’s side of every agreement it concludes: Ed25519 over the SHA-256 of the <a data-link-type="dfn" href="#canonical-form" id="ref-for-canonical-form">canonical form</a> of the agreement with every <code>fdt-p:signature</code> excluded, <code>keyId</code> in the signer’s own published JWK set. Signing as the controller’s agent it MUST carry <code>fdt-p:onBehalfOf</code>; signing with the controller’s own key it MUST NOT; and it MUST refuse a signature naming as principal the party who made it.
+      <td><a href="#negotiation-signatures-form">§ 7.4.1 What is signed</a>, <a href="#negotiation-signatures-roles">§ 7.4.2 Who signed, and for whom</a>
+      <td>Rule — <code>canonical.py</code> against <code>tests/canonical-vectors/</code>; <code>derivation.py</code> refusing <code>agents-signature-presented-as-the-partys.ttl</code>. Schema — <code>fdts:SignatureShape</code> refusing <code>agreement-signature-that-does-not-say-which-side.ttl</code>.
+  
+     <tr id="sta-18">
+      <td>STA-18
+      <td>A station MUST NOT run anything under an agreement that does not carry the assignee’s signature, and MUST emit <code>negotiation.active</code>, naming the agreement, only once it has stored both signatures.
+      <td><a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, <a href="#negotiation-signatures-unsigned">§ 7.4.5 When the assignee does not sign</a>
+      <td>Schema — <code>fdts:AgreementShape</code> refusing <code>agreement-signed-by-the-assigner-only.ttl</code>; Rule — <code>derivation.py</code> refusing <code>agreement-only-the-station-ever-signed.ttl</code>; <code>visit-event.schema.json</code> (<code>negotiation.active</code> names the <code>agreement</code>). Harness for the ordering.
+  
+     <tr id="sta-19">
+      <td>STA-19
+      <td>Verifying a signature, a station MUST hold the other party’s key from out-of-band configuration and MUST NOT take it from the document being verified; refusing one it MUST state exactly one of <code>UnknownKey</code>, <code>DoesNotVerify</code>, <code>WrongParty</code>, <code>WrongDigest</code>.
+      <td><a href="#negotiation-signatures-refusals">§ 7.4.4 Refusing a signature</a>
+      <td>Schema — the <code>422</code> body of <code>POST /visits/{visitId}/agreement/signature</code> in <code>station-visit-api.yaml</code>. Harness for the four cases.
+  
+     <tr id="sta-20">
+      <td>STA-20
+      <td>At PEP 2 a station MUST check that the agreement is active and carries both signatures, that its target, train, network and assignee are the descriptor’s, that its usage terms admit the run now and that the station’s quotas allow it; it MUST emit <code>visit.queued</code> on success and reject otherwise.
+      <td><a href="#execution">§ 8 Execution and inspection</a>
+      <td>Harness.
+  
+     <tr id="sta-21">
+      <td>STA-21
+      <td>A station MUST pass the descriptor’s parameters to the adapter unchanged, MUST emit <code>visit.running</code>, and MUST end a visit <strong>Failed</strong> with <code>visit.failed</code> carrying <code>reason</code> when the adapter or the infrastructure breaks.
+      <td><a href="#execution">§ 8 Execution and inspection</a>
+      <td>Schema — <code>visit-event.schema.json</code> (<code>visit.failed</code> requires <code>reason</code>). Harness.
+  
+     <tr id="sta-22">
+      <td>STA-22
+      <td>At PEP 3 a station MUST perform the six checks of <a href="#execution">§ 8 Execution and inspection</a> in order and release nothing when one fails: the output schema is declared and resolves; it is closed; the result validates against it; the onward state class is admitted by <code>fdt-p:deliverResult</code> and by <code>onward.allowedClasses</code>; every duty holds, a k-anonymity duty over every value marked <code>x-fdt-subjectCount</code>, a count of 0 passing and a count of 1 to <em>k</em>−1 failing, and a duty the station cannot check rejecting; and the envelope names <code>inspection.outputSchema</code>.
+      <td><a href="#execution">§ 8 Execution and inspection</a>
+      <td>Rule — <code>inspection.py check</code> over every envelope in <code>examples/protocol/</code>, refusing <code>open-output-schema.json</code>, <code>result-the-schema-does-not-describe.json</code>, <code>cell-below-threshold.json</code>, <code>unenforceable-k-duty.json</code> and accepting <code>zero-cell-is-not-a-disclosure.json</code>.
+  
+     <tr id="sta-23">
+      <td>STA-23
+      <td><code>RecordLevel</code> state MUST NOT leave a station under any agreement; record-level content MUST NOT appear in an envelope’s <code>result</code> or <code>artifacts</code>, in an event’s <code>evidence</code> or in a <code>justification</code>.
+      <td><a href="#execution">§ 8 Execution and inspection</a>, <a href="#reporting-events">§ 10.1 Events</a>, <a href="#result-envelope">§ 12.3 Visit-result envelope</a>
+      <td>Rule — <code>inspection.py</code> refusing <code>record-level-onward.json</code>; Schema — <code>fdts:VisitShape</code> refusing <code>visit-record-level-onward.ttl</code>. Harness for events.
+  
+     <tr id="sta-24">
+      <td>STA-24
+      <td>A station MUST NOT list a prohibition on what the consumer does after delivery (<code>fdt-p:reidentify</code>, <code>odrl:sell</code>) among the duties that passed inspection.
+      <td><a href="#execution">§ 8 Execution and inspection</a>
+      <td>Harness — <code>inspection.justification</code> of a delivered envelope.
+  
+     <tr id="sta-25">
+      <td>STA-25
+      <td>Every decision a station takes and every state change of a visit MUST be emitted as a <a data-link-type="dfn" href="#visit-event" id="ref-for-visit-event">visit event</a> conforming to the schema, with the conditional rules of <a href="#event">§ 12.2 Visit event</a>: every decision event carries a <code>justification</code> (decision, rule, source, evidence), and every terminal event announces the state it ends in.
+      <td><a href="#reporting-events">§ 10.1 Events</a>, <a href="#event">§ 12.2 Visit event</a>
+      <td>Schema — <code>visit-event.schema.json</code> over <code>visit-events-gd-m1.json</code>, <code>visit-events-gd-m1-poll.json</code>, <code>visit-events-gd-m1-rejected.json</code>, <code>visit-events-gd-m1-revoked.json</code>, <code>visit-events-ttg-hop1.json</code>. Harness for completeness.
+  
+     <tr id="sta-26">
+      <td>STA-26
+      <td>Every non-success event MUST carry the <code>reason</code> the consumer will see; the envelope MUST repeat it; and a <a data-link-type="dfn" href="#problem" id="ref-for-problem">Problem</a> a station answers with MUST carry the same outcome word as the visit’s terminal event.
+      <td><a href="#outcomes">§ 11 Outcomes, cancellation, retries, revocation</a>, <a href="#status-problem">§ 12.5 VisitStatus and Problem</a>
+      <td>Schema — <code>visit-result.schema.json</code> (every outcome but <code>delivered</code> requires <code>reason</code>), <code>visit-result-gd-m1-refused.json</code>, <code>visit-result-gd-m1-rejected.json</code>, <code>visit-result-gd-m1-failed.json</code>. Harness for the Problem.
+  
+     <tr id="sta-27">
+      <td>STA-27
+      <td>Once a visit is terminal its <a data-link-type="dfn" href="#visit-result-envelope" id="ref-for-visit-result-envelope">visit-result envelope</a> MUST be available and MUST conform to the schema: <code>state</code> carries the outcome; <code>result</code> is empty under any outcome but <code>delivered</code>; a delivered visit carries <code>agreement</code>, <code>deliveredAt</code> and <code>inspection</code>; a result rejected at PEP 3 carries <code>agreement</code> and <code>inspection</code>; a visit that did not deliver says at which <code>checkpoint</code> it ended.
+      <td><a href="#reporting-result">§ 10.2 Result and artefacts</a>, <a href="#result-envelope">§ 12.3 Visit-result envelope</a>
+      <td>Schema — <code>visit-result.schema.json</code> over <code>visit-result-gd-m1.json</code>, <code>visit-result-gd-m1-refused.json</code>, <code>visit-result-gd-m1-rejected.json</code>, <code>visit-result-gd-m1-failed.json</code>, <code>visit-result-ttg-hop1.json</code>.
+  
+     <tr id="sta-28">
+      <td>STA-28
+      <td>A station MUST keep the outcome vocabulary — Delivered, Refused, Rejected, TimedOut, Failed, Revoked — exact in its events, its envelopes, its logs and its user interfaces, and MUST NOT report Skipped about itself.
+      <td><a href="#outcomes">§ 11 Outcomes, cancellation, retries, revocation</a>
+      <td>Schema — the <code>state</code> enumerations of <code>visit-event.schema.json</code> and <code>visit-result.schema.json</code>. Harness for logs and interfaces.
+  
+     <tr id="sta-29">
+      <td>STA-29
+      <td>On withdrawal a queued or pending visit MUST end at once with <code>negotiation.withdrawn</code>, a running visit MUST stop at its next checkpoint with <code>visit.cancelled</code>, either ending <strong>TimedOut</strong>; a visit already terminal MUST be unaffected.
+      <td><a href="#outcomes-cancel">§ 11.1 Cancellation</a>
+      <td>Harness.
+  
+     <tr id="sta-30">
+      <td>STA-30
+      <td>When the controller takes the agreement out of force, a queued or running visit MUST stop at its next checkpoint with <code>visit.revoked</code>, naming the agreement and carrying the controller’s reason verbatim. A visit that arrives afterwards presenting a revoked agreement MUST be <strong>Refused</strong> at PEP 2, not Revoked.
+      <td><a href="#outcomes-revocation">§ 11.2 Revocation</a>
+      <td>Schema — <code>visit-events-gd-m1-revoked.json</code>; refusing <code>visit-event-revocation-that-names-no-agreement.json</code>, <code>visit-event-revocation-reported-as-refused.json</code>. Harness for the arriving case.
+  
+     <tr id="sta-31">
+      <td>STA-31
+      <td>Receiving a hand-over, a station MUST check at PEP 1 that <code>handOver.fromVisit</code> appears in the descriptor’s <code>precededBy</code> <strong>before fetching anything</strong>, MUST require in the request a permission for <code>fdt-p:acceptHandOver</code> constrained by <code>fdt-p:inboundStateClass</code>, MUST fetch <code>url</code> over <code>https</code> only, and MUST hash what it got and compare it to <code>digest</code>.
+      <td><a href="#inbound">§ 9.2 What arrives</a>
+      <td>Schema — <code>visit-descriptor.schema.json</code> (a hand-over requires a lineage and the permission; <code>url</code> is <code>https</code> only) over <code>visit-descriptor-ttg-hop3.json</code>; <code>fdts:RequestShape</code> refusing <code>request-accepting-a-hand-over-without-an-inbound-class.ttl</code>. Harness for the membership itself, which no schema can decide, and for the digest.
+  
+     <tr id="sta-32">
+      <td>STA-32
+      <td>Handing state onward, a station MUST record the hand-over digest as <code>onward.handedOverDigest</code> and MUST hand <code>Pseudonym</code>-class state to a linkage station only.
+      <td><a href="#outbound">§ 9.1 What leaves</a>
+      <td>Schema — <code>visit-result.schema.json</code> (<code>onward</code>), <code>visit-result-ttg-hop1.json</code>. Harness.
+  
+     <tr id="sta-33">
+      <td>STA-33
+      <td>All traffic a station opens or accepts under this protocol MUST be over TLS.
+      <td><a href="#security-transport">§ 15.2 Transport and integrity</a>
+      <td>Harness.
+
+   </table>
+   <h4 class="heading settled" data-level="2.3.2" id="criteria-push"><span class="secno">2.3.2. </span><span class="content">A push-dispatch station</span><a class="self-link" href="#criteria-push"></a></h4>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="push-1">
+      <td>PUSH-1
+      <td>A push-dispatch station MUST implement, as <code>station-visit-api.yaml</code> defines them, <code>GET /</code>, <code>POST /visits</code>, <code>GET /visits/{visitId}</code>, <code>GET /visits/{visitId}/events</code>, <code>GET /visits/{visitId}/result</code>, <code>POST /visits/{visitId}/cancel</code>, <code>POST /visits/{visitId}/agreement/signature</code> and <code>GET /agreements/{agreementId}</code>; and <code>GET /visits/{visitId}/artifacts/{name}</code> when it releases artefacts by reference.
+      <td><a href="#station-api">§ 13 Station API</a>
+      <td>Schema — <code>station-visit-api.yaml</code>. Harness.
+  
+     <tr id="push-2">
+      <td>PUSH-2
+      <td>To <code>POST /visits</code> a station MUST answer <code>202</code> with a <code>Location</code> header and a <a data-link-type="dfn" href="#visitstatus" id="ref-for-visitstatus">VisitStatus</a> when it took the visit; <code>200</code> with the current status on a replay of the same visit and attempt; <code>400</code> with a <a data-link-type="dfn" href="#problem" id="ref-for-problem①">Problem</a> when rejected at PEP 1; <code>401</code> when the credential is missing or untrusted; <code>403</code> with a Problem when refused; <code>409</code> when the visit IRI is known with a different, still-running attempt; and <code>415</code> when it does not support the mechanism.
+      <td><a href="#dispatch-push">§ 6.1 Push dispatch</a>, <a href="#parties">§ 4 Parties and identifiers</a>
+      <td>Harness.
+  
+     <tr id="push-3">
+      <td>PUSH-3
+      <td>After <code>negotiation.matched</code> a station MUST emit <code>negotiation.awaiting-signature</code> naming the agreement and carrying <code>agreementDigest</code> in its justification’s evidence; MUST serve the agreement at <code>GET /agreements/{agreementId}</code> to a party to it, with a <code>Digest</code> header; and MUST verify the posted <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature">AgreementSignature</a> against the key it holds for the assignee, store it, emit <code>negotiation.active</code> and queue the run — answering <code>404</code> when nothing awaits a signature, <code>409</code> when already signed and <code>422</code> naming which of the four refusals.
+      <td><a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, <a href="#station-api">§ 13 Station API</a>
+      <td>Schema — <code>visit-events-gd-m1.json</code> (nine events, the fifth <code>negotiation.awaiting-signature</code>). Harness.
+  
+     <tr id="push-4">
+      <td>PUSH-4
+      <td>While the assignee has not signed, a station MUST record no outcome and MUST leave the visit at <code>negotiation.awaiting-signature</code> until it is withdrawn.
+      <td><a href="#negotiation-signatures-unsigned">§ 7.4.5 When the assignee does not sign</a>
+      <td>Harness. (Q27 default.)
+  
+     <tr id="push-5">
+      <td>PUSH-5
+      <td>Under reporting mode <code>callback</code> a station MUST <code>POST</code> events to <code>{callbackUrl}/events</code> and <code>PUT</code> the envelope to <code>{callbackUrl}/result</code>, presenting <code>callbackToken</code> as a bearer token; under <code>poll</code> it MUST serve <code>GET /visits/{visitId}/events?after=n</code> returning the events with <code>sequence</code> greater than <em>n</em>, and <code>GET /visits/{visitId}/result</code>, answering <code>409</code> while the visit is not terminal.
+      <td><a href="#dispatch-reporting">§ 6.3 Reporting modes</a>, <a href="#reporting-events">§ 10.1 Events</a>, <a href="#reporting-result">§ 10.2 Result and artefacts</a>
+      <td>Harness.
+  
+     <tr id="push-6">
+      <td>PUSH-6
+      <td>To <code>POST /visits/{visitId}/cancel</code> a station MUST answer <code>200</code> with the visit’s current status, and MUST act as STA-29 says.
+      <td><a href="#outcomes-cancel">§ 11.1 Cancellation</a>
+      <td>Harness.
+
+   </table>
+   <h4 class="heading settled" data-level="2.3.3" id="criteria-poll"><span class="secno">2.3.3. </span><span class="content">A poll-dispatch station</span><a class="self-link" href="#criteria-poll"></a></h4>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="poll-1">
+      <td>POLL-1
+      <td>A poll-dispatch station MUST implement as a client, as <code>handler-callback-api.yaml</code> defines them, <code>GET /stations/{stationId}/pending-visits</code>, <code>POST /visits/{visitId}/ack</code>, <code>POST /visits/{visitId}/events</code>, <code>PUT /visits/{visitId}/result</code> and <code>POST /visits/{visitId}/agreement</code>; and <code>PUT /visits/{visitId}/artifacts/{name}</code> when it releases artefacts by reference.
+      <td><a href="#dispatch-poll">§ 6.2 Poll dispatch</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Schema — <code>handler-callback-api.yaml</code>. Harness.
+  
+     <tr id="poll-2">
+      <td>POLL-2
+      <td>For each descriptor it takes, a station MUST <code>POST /visits/{visitId}/ack</code> with its first event — <code>visit.received</code> — or with a <a data-link-type="dfn" href="#problem" id="ref-for-problem②">Problem</a> when rejected at PEP 1; answered <code>409</code>, it MUST NOT start the visit.
+      <td><a href="#dispatch-poll">§ 6.2 Poll dispatch</a>
+      <td>Harness.
+  
+     <tr id="poll-3">
+      <td>POLL-3
+      <td>A poll-dispatch station MUST report by callback.
+      <td><a href="#dispatch-reporting">§ 6.3 Reporting modes</a>
+      <td>Harness.
+  
+     <tr id="poll-4">
+      <td>POLL-4
+      <td>A poll-dispatch station MUST NOT emit <code>negotiation.awaiting-signature</code>. After <code>negotiation.matched</code> it MUST send one <a data-link-type="dfn" href="#countersignaturerequest" id="ref-for-countersignaturerequest">CountersignatureRequest</a> to <code>POST /visits/{visitId}/agreement</code>, carrying the agreement IRI, the agreement <strong>itself</strong> as canonical N-Quads or Turtle — never a JSON projection — and the assigner’s signature; on <code>201</code> it MUST store both signatures and emit <code>negotiation.active</code> with <code>signatureRoute: station-initiated</code> and <code>dispatchMode: poll</code> in its justification’s evidence; on <code>422</code> it MUST proceed as PUSH-4 says, without the event.
+      <td><a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, <a href="#signature-messages">§ 12.6 Signature messages</a>
+      <td>Schema — <code>poll-countersign-ask-gd-m1.json</code>, <code>visit-events-gd-m1-poll.json</code> (eight events, no <code>negotiation.awaiting-signature</code>); refusing <code>poll-countersign-ask-without-the-assigners-signature.json</code>, <code>poll-countersign-ask-whose-document-is-not-the-one-signed.json</code>, <code>poll-countersign-ask-that-chooses-its-own-role.json</code>. Harness.
+  
+     <tr id="poll-5">
+      <td>POLL-5
+      <td>Answered <code>410</code> to <code>POST /visits/{visitId}/events</code>, a station MUST stop the visit at its next checkpoint as STA-29 says.
+      <td><a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Harness.
+  
+     <tr id="poll-6">
+      <td>POLL-6
+      <td>A poll-dispatch station MUST authenticate at the Handler with the OpenID Connect client credentials of its operator.
+      <td><a href="#security-credential">§ 15.1 Credentials</a>
+      <td>Harness.
+
+   </table>
+   <h4 class="heading settled" data-level="2.3.4" id="criteria-handler"><span class="secno">2.3.4. </span><span class="content">A Train Handler</span><a class="self-link" href="#criteria-handler"></a></h4>
+   <table class="criteria data">
+    <thead>
+     <tr>
+      <th>Id
+      <th>Requirement
+      <th>Stated in
+      <th>Checked by
+  
+    <tbody>
+     <tr id="hnd-1">
+      <td>HND-1
+      <td>A Handler MUST mint the visit IRI of every visit and use it as the idempotency key: a retry of a <strong>Failed</strong> visit MUST re-dispatch the same visit IRI with <code>attempt</code> incremented by one and <code>negotiation.agreement</code> set to the existing agreement.
+      <td><a href="#parties">§ 4 Parties and identifiers</a>, <a href="#dispatch-idempotency">§ 6.4 Idempotency, attempts and withdrawal</a>
+      <td>Schema — <code>visit-descriptor.schema.json</code> (<code>visit</code> required). Harness for retries.
+  
+     <tr id="hnd-2">
+      <td>HND-2
+      <td>Every descriptor a Handler composes MUST conform to the visit-descriptor schema: the protocol identifier; <code>hop</code> and <code>phase</code>; the train’s IRI, type and mechanism; <code>payload.digest</code> equal to the <code>fdt-o:artifactDigest</code> of the train’s Depot offer, with exactly one of <code>content</code> or <code>url</code>; exactly one of <code>negotiation.request</code> or <code>negotiation.agreement</code>; <code>onward</code>; <code>reporting</code>.
+      <td><a href="#descriptor">§ 12.1 Visit descriptor</a>
+      <td>Schema — <code>visit-descriptor.schema.json</code> over <code>visit-descriptor-gd-m1.json</code>, <code>visit-descriptor-ttg-hop1.json</code>, <code>visit-descriptor-ttg-hop3.json</code>. Rule — <code>payloads.py check</code> for the digest.
+  
+     <tr id="hnd-3">
+      <td>HND-3
+      <td>A Handler MUST embed an <code>odrl:Request</code> valid against <code>fdts:RequestShape</code> — the network, the train, the target, the assignee and the actions asked for with their constraints, a purpose among them — or the IRI of an existing active agreement; the descriptor’s <code>consumer.party</code> MUST be the request’s <code>odrl:assignee</code>.
+      <td><a href="#negotiation-request">§ 7.1 Request or agreement</a>
+      <td>Schema — <code>fdts:RequestShape</code> over the requests of <code>policies.ttl</code> and <code>trains-and-plans.ttl</code>, refusing <code>request-without-network.ttl</code>, <code>request-without-purpose.ttl</code>, <code>request-without-train.ttl</code>. Harness for the party match.
+  
+     <tr id="hnd-4">
+      <td>HND-4
+      <td>A Handler MUST visit under its own credential and MUST NOT forward a consumer’s. It MUST carry <code>consumer.presentation</code> verbatim in every descriptor, MUST carry <code>exchangedToken</code> only alongside it, and MUST NOT set <code>assurance</code> or <code>exchange</code> in a presentation it sends.
+      <td><a href="#security-credential">§ 15.1 Credentials</a>, <a href="#presentation-message">§ 12.4 Presentation</a>
+      <td>Schema — <code>presentation.schema.json</code>; the ADR-044 mutations of <code>tests/validate_protocol.py</code>. Harness for the credential used.
+  
+     <tr id="hnd-5">
+      <td>HND-5
+      <td>A Handler MUST state <code>approvalWait</code> as an <code>xsd:dayTimeDuration</code> — never in months or years — and while a visit is pending MUST wait up to it and then either withdraw the visit with cause <code>approval-timeout</code> or keep waiting as the plan’s failure policy says; a visit so withdrawn MUST be recorded <strong>TimedOut</strong>.
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>, <a href="#descriptor">§ 12.1 Visit descriptor</a>
+      <td>Schema — the <code>P1M</code> mutation of <code>tests/validate_protocol.py</code>; <code>fdts:FailurePolicyShape</code> refusing <code>plan-approval-wait-of-one-month.ttl</code>, <code>plan-approval-wait-typed-xsd-duration.ttl</code>. Harness for the wait.
+  
+     <tr id="hnd-6">
+      <td>HND-6
+      <td>Before signing, a Handler MUST compute the canonical digest of the agreement document it holds and check that it equals the digest stated; MUST verify the assigner’s signature over it against the key it holds for that party from out-of-band configuration; and MUST check the terms. It MUST NOT sign a document the station has not signed, a digest other than the one it computed, or a document whose assigner signature is for a party other than the agreement’s assigner; refusing, it MUST state exactly one of the four reasons.
+      <td><a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, <a href="#negotiation-signatures-refusals">§ 7.4.4 Refusing a signature</a>
+      <td>Rule — <code>canonical.py</code> against <code>tests/canonical-vectors/</code>; <code>derivation.py check</code> verifies every counter-signature in <code>examples/</code> against the key it names and refuses <code>agreement-changed-after-it-was-signed.ttl</code>. Schema — refusing <code>poll-countersign-ask-without-the-assigners-signature.json</code>, <code>poll-countersign-ask-whose-document-is-not-the-one-signed.json</code>. Harness for the four cases.
+  
+     <tr id="hnd-7">
+      <td>HND-7
+      <td>A Handler MUST sign the assignee’s side with the train owner’s key: to a push-dispatch station by posting an <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature①">AgreementSignature</a> — which carries no role — to <code>POST /visits/{visitId}/agreement/signature</code>; to a poll-dispatch station by serving <code>POST /visits/{visitId}/agreement</code>, answering <code>201</code> with a <a data-link-type="dfn" href="#countersignature" id="ref-for-countersignature">Countersignature</a>, <code>409</code> when already countersigned, or <code>422</code> with a <a data-link-type="dfn" href="#countersignaturerefused" id="ref-for-countersignaturerefused">CountersignatureRefused</a>.
+      <td><a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, <a href="#signature-messages">§ 12.6 Signature messages</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Schema — <code>poll-countersign-answer-gd-m1.json</code>; <code>fdts:AgreementShape</code> refusing <code>agreement-signed-by-the-assignee-only.ttl</code> (a Handler that signs first). Harness.
+  
+     <tr id="hnd-8">
+      <td>HND-8
+      <td>A Handler MUST accept at-least-once delivery of events, MUST de-duplicate them on <code>id</code> and order them on <code>sequence</code>, and MUST drive its view of the run from the event stream and the envelopes alone.
+      <td><a href="#reporting-events">§ 10.1 Events</a>
+      <td>Harness.
+  
+     <tr id="hnd-9">
+      <td>HND-9
+      <td>A descriptor that carries <code>handOver</code> MUST name <code>handOver.fromVisit</code> in its own <code>precededBy</code>, MUST carry a request with a permission for <code>fdt-p:acceptHandOver</code> constrained by <code>fdt-p:inboundStateClass</code>, and MUST name the hand-over by <code>https</code> location and digest and never carry it.
+      <td><a href="#inbound">§ 9.2 What arrives</a>
+      <td>Schema — <code>visit-descriptor.schema.json</code> over <code>visit-descriptor-ttg-hop3.json</code>; <code>fdts:RequestShape</code> refusing <code>request-accepting-a-hand-over-without-an-inbound-class.ttl</code>. Harness for the membership, which no schema can decide.
+  
+     <tr id="hnd-10">
+      <td>HND-10
+      <td>A Handler MUST hold non-personal, aggregate results, envelopes, events and the <strong>names</strong> of hand-overs only (ADR-015). It MUST answer <code>422</code> to an envelope carrying record-level content or lacking its outcome or reason, and <code>409</code> to an uploaded artefact whose digest is not the envelope’s.
+      <td><a href="#inbound">§ 9.2 What arrives</a>, <a href="#reporting-result">§ 10.2 Result and artefacts</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Harness.
+  
+     <tr id="hnd-11">
+      <td>HND-11
+      <td>A Handler MUST assemble the run record and the completeness statement from envelopes and events only, reporting for every intended station its outcome in the seven words verbatim, its cause and the station’s stated reason; <strong>Skipped</strong> is the Handler’s own record and MUST carry one of <code>NotSelected</code>, <code>NotEvaluated</code>, <code>Pruned</code>, <code>Dropped</code>.
+      <td><a href="#outcomes">§ 11 Outcomes, cancellation, retries, revocation</a>, <a href="#result-envelope">§ 12.3 Visit-result envelope</a>
+      <td>Schema — <code>visit-result.schema.json</code> (a skipped visit carries <code>skipCause</code> and <code>reason</code>); <code>run-state.schema.json</code> over <code>run-state-two-phase.json</code>; <code>fdts:RunShape</code> refusing <code>run-partial-without-completeness.ttl</code>. Harness.
+  
+     <tr id="hnd-12">
+      <td>HND-12
+      <td>A Handler MUST apply the plan’s failure policy and budget deadline through <code>POST /visits/{visitId}/cancel</code>, stating a <code>reason</code> and one of the causes <code>approval-timeout</code>, <code>fail-run</code>, <code>stopped-by-person</code>, <code>deadline</code>, <code>replanned</code>; it MUST NOT report a visit it withdrew as Refused or Rejected.
+      <td><a href="#dispatch-idempotency">§ 6.4 Idempotency, attempts and withdrawal</a>, <a href="#outcomes-cancel">§ 11.1 Cancellation</a>
+      <td>Harness.
+  
+     <tr id="hnd-13">
+      <td>HND-13
+      <td>A Handler MUST dispatch query and API trains orchestrated and MUST NOT give them onward destination <code>train</code>.
+      <td><a href="#outbound">§ 9.1 What leaves</a>
+      <td>Schema — <code>fdts:QueryTrainCoordinationShape</code> refusing <code>plan-query-train-choreographed.ttl</code>. Harness for the descriptor.
+  
+     <tr id="hnd-14">
+      <td>HND-14
+      <td>Serving <code>GET /visits/{visitId}/plan</code>, a Handler MUST disclose the run’s structure in full and never another station’s identity in any form — <code>intendedStationCount</code> and not the list — MUST say in <code>redaction</code> what the document withholds, and MUST answer <code>403</code> to a caller who does not hold the visit.
+      <td><a href="#redacted-plan">§ 12.7 Redacted plan</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Schema — <code>redacted-plan.schema.json</code> over <code>redacted-plan-ttg-hop1.json</code>, refusing the seven <code>redacted-plan-*.json</code> counter-examples. Harness for <code>403</code>.
+  
+     <tr id="hnd-15">
+      <td>HND-15
+      <td>Everything a station can reach at a Handler MUST be scoped to that station’s own traffic, reachable with the per-visit callback token or the station operator’s credential; nothing a consumer’s console reads MUST be reachable with either.
+      <td><a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Harness.
+  
+     <tr id="hnd-16">
+      <td>HND-16
+      <td>For a poll-dispatch station a Handler MUST serve <code>GET /stations/{stationId}/pending-visits</code>, honouring <code>wait</code> up to 60 s; MUST answer <code>409</code> to the acknowledgement of a visit it withdrew meanwhile and <code>410</code> to the events of a withdrawn visit.
+      <td><a href="#dispatch-poll">§ 6.2 Poll dispatch</a>, <a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+      <td>Harness.
+  
+     <tr id="hnd-17">
+      <td>HND-17
+      <td>A Handler MUST keep the outcome vocabulary exact in code, logs and user interfaces, and a console MUST render <code>presented-only</code> and <code>presented-and-verified</code> as two states.
+      <td><a href="#outcomes">§ 11 Outcomes, cancellation, retries, revocation</a>, <a href="#security-credential">§ 15.1 Credentials</a>
+      <td>Harness.
+  
+     <tr id="hnd-18">
+      <td>HND-18
+      <td>All traffic a Handler opens or accepts under this protocol MUST be over TLS.
+      <td><a href="#security-transport">§ 15.2 Transport and integrity</a>
+      <td>Harness.
+
+   </table>
+   <h3 class="heading settled" data-level="2.4" id="conformance-optional"><span class="secno">2.4. </span><span class="content">Optional features</span><a class="self-link" href="#conformance-optional"></a></h3>
+   <p>The following are permitted by this specification and required by no conformance class. A
+conformance statement says which of them an implementation provides.</p>
+   <table class="data">
+    <thead>
+     <tr>
+      <th>Feature
+      <th>Who
+      <th>Stated in
+  
+    <tbody>
+     <tr>
+      <td>Streaming events as Server-Sent Events on <code>Accept: text/event-stream</code>
+      <td>push-dispatch station
+      <td><a href="#reporting-events">§ 10.1 Events</a>
+  
+     <tr>
+      <td>Batching several events of one visit in one callback
+      <td>station
+      <td><a href="#reporting-events">§ 10.1 Events</a>
+  
+     <tr>
+      <td><code>visit.progress</code> events
+      <td>station
+      <td><a href="#execution">§ 8 Execution and inspection</a>
+  
+     <tr>
+      <td>A station-side approval timeout, <code>approval.expiresAt</code>
+      <td>station
+      <td><a href="#negotiation-outcome">§ 7.2 Matched, pending, refused</a>
+  
+     <tr>
+      <td>Releasing artefacts by reference (<code>artifacts[].url</code>, or upload under poll dispatch)
+      <td>station
+      <td><a href="#reporting-result">§ 10.2 Result and artefacts</a>
+  
+     <tr>
+      <td>Both dispatch modes
+      <td>station
+      <td><a href="#dispatch-poll">§ 6.2 Poll dispatch</a>
+  
+     <tr>
+      <td>Long-polling the pending list with <code>wait</code>
+      <td>Handler
+      <td><a href="#handler-api">§ 14 Handler API — the station-facing surface</a>
+  
+     <tr>
+      <td>Carrying an RFC 8693 exchanged token
+      <td>Handler, where the network’s identity provider performs the exchange
+      <td><a href="#security-credential">§ 15.1 Credentials</a>
+  
+     <tr>
+      <td>Onward destination <code>linkage</code> and <code>train</code>
+      <td>Handler and station
+      <td><a href="#outbound">§ 9.1 What leaves</a>
+
+   </table>
+   <h3 class="heading settled" data-level="2.5" id="conformance-statement"><span class="secno">2.5. </span><span class="content">Conformance statement</span><a class="self-link" href="#conformance-statement"></a></h3>
+   <p>An implementation claims conformance by stating:</p>
+   <ol>
+    <li data-md>
+     <p>the conformance class or classes claimed;</p>
+    <li data-md>
+     <p>the <code>fdt-commons</code> version and commit whose artefacts it was validated against (<a href="#artefacts">Appendix B: Normative artefacts</a>
+names this document’s);</p>
+    <li data-md>
+     <p>which optional features of <a href="#conformance-optional">§ 2.4 Optional features</a> it provides;</p>
+    <li data-md>
+     <p>for every criterion checked by <strong>schema</strong> or <strong>rule</strong>, that it accepts every published fixture
+named and refuses every counter-example named with the message <code>tests/expectations.json</code>
+records — the reference implementation’s <code>make check</code> is one way to run them all;</p>
+    <li data-md>
+     <p>for every criterion checked by <strong>harness</strong>, the evidence it offers, and whether that evidence
+was produced by a harness a third party can run.</p>
+   </ol>
+   <p>A statement that leaves item 5 to self-assertion is a valid statement and says so. The
+conformance harness and a statement template are owed by the reference implementation’s
+conformance work package and will be published beside this document; until they are, no
+implementation other than the reference implementation can make a third-party-verified claim, and
+this specification does not pretend otherwise.</p>
    <h2 class="heading settled" data-level="3" id="terminology"><span class="secno">3. </span><span class="content">Terminology</span><a class="self-link" href="#terminology"></a></h2>
    <dl>
     <dt data-md><dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="run">run</dfn>
@@ -2516,8 +3067,8 @@ push, a retry under the same agreement, and every event and envelope refer to it
 treat a repeated <code>POST /visits</code> with the same visit and attempt as a replay and answer with the
 visit’s current status. Event IRIs are minted by the station and MUST be unique; <code>sequence</code> MUST
 be monotonic per visit and attempt.</p>
-   <p>A station advertises that it speaks this protocol in its self-description: its dispatch endpoint
-is a <code>dcat:DataService</code> whose <code>dct:conformsTo</code> is the protocol identifier
+   <p>A station MUST advertise that it speaks this protocol in its self-description: its dispatch
+endpoint is a <code>dcat:DataService</code> whose <code>dct:conformsTo</code> is the protocol identifier
 <code>https://w3id.org/fdt/visit-protocol/v1</code>, and whose <code>dcat:endpointURL</code> is the base URL of the
 Station API.</p>
    <h2 class="heading settled" data-level="5" id="overview"><span class="secno">5. </span><span class="content">Overview of a visit</span><a class="self-link" href="#overview"></a></h2>
@@ -2554,8 +3105,8 @@ Station API.</p>
    <h3 class="heading settled" data-level="6.1" id="dispatch-push"><span class="secno">6.1. </span><span class="content">Push dispatch</span><a class="self-link" href="#dispatch-push"></a></h3>
    <p>Under push dispatch the Handler <code>POST</code>s the visit descriptor to the station’s dispatch endpoint,
 read from the station’s self-description. The station MUST answer <code>202 Accepted</code> with a
-<code>Location</code> header naming the visit’s status URL and a <a data-link-type="dfn" href="#visitstatus" id="ref-for-visitstatus">VisitStatus</a> body when the visit was
-taken; <code>200</code> with the current status on an idempotent replay; <code>400</code> with a <a data-link-type="dfn" href="#problem" id="ref-for-problem">Problem</a> when the
+<code>Location</code> header naming the visit’s status URL and a <a data-link-type="dfn" href="#visitstatus" id="ref-for-visitstatus①">VisitStatus</a> body when the visit was
+taken; <code>200</code> with the current status on an idempotent replay; <code>400</code> with a <a data-link-type="dfn" href="#problem" id="ref-for-problem③">Problem</a> when the
 visit is rejected at PEP 1; <code>401</code> when the credential is missing or untrusted; <code>403</code> with a
 Problem when the visit is refused at negotiation; <code>409</code> when the same visit IRI is known with a
 different, still-running attempt; and <code>415</code> when the station does not support the train’s
@@ -2668,7 +3219,7 @@ authority, or a controller asking later under what terms their data was touched.
 signs</strong> (ADR-038), and an agreement carries one <code>fdt-p:signature</code> of each role,
 <code>fdt-p:AssignerSignature</code> and <code>fdt-p:AssigneeSignature</code>.</p>
    <h4 class="heading settled" data-level="7.4.1" id="negotiation-signatures-form"><span class="secno">7.4.1. </span><span class="content">What is signed</span><a class="self-link" href="#negotiation-signatures-form"></a></h4>
-   <p>The signed digest is the SHA-256 of the <a data-link-type="dfn" href="#canonical-form" id="ref-for-canonical-form">canonical form</a> of the agreement’s concise bounded
+   <p>The signed digest is the SHA-256 of the <a data-link-type="dfn" href="#canonical-form" id="ref-for-canonical-form①">canonical form</a> of the agreement’s concise bounded
 description **with every <code>fdt-p:signature</code> node excluded** — not only the signer’s own — so that
 both parties sign one string, neither signature covers the other, the order they were made in is
 not part of what was agreed, and neither party can invalidate the other’s by re-signing.</p>
@@ -2718,17 +3269,17 @@ opens the call is decided by the <strong>dispatch mode and by nothing else</stro
 <code>agreementDigest</code> — the digest to sign. The Handler fetches the agreement
 (<code>GET /agreements/{agreementId}</code>), computes the digest for itself from the document it read,
 checks that it equals the one stated, verifies the assigner’s signature over it, checks the terms,
-signs the digest with the train owner’s key and <code>POST</code>s an <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature">AgreementSignature</a> to
+signs the digest with the train owner’s key and <code>POST</code>s an <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature②">AgreementSignature</a> to
 <code>POST /visits/{visitId}/agreement/signature</code>. The station verifies it against the key it holds for
 that party, stores it, emits <code>negotiation.active</code> and queues the run. The visit stays at <code>Checking</code>
 throughout: nothing about it is waiting on a <em>person</em>.</p>
    <p><strong>Poll-dispatched station.</strong> The station has no inbound port, so it cannot be told to wait to be
 called; it emits no <code>negotiation.awaiting-signature</code> and instead opens <strong>one round trip of its
-own</strong>: <code>POST /visits/{visitId}/agreement</code> on the Handler, with a <a data-link-type="dfn" href="#countersignaturerequest" id="ref-for-countersignaturerequest">CountersignatureRequest</a>
+own</strong>: <code>POST /visits/{visitId}/agreement</code> on the Handler, with a <a data-link-type="dfn" href="#countersignaturerequest" id="ref-for-countersignaturerequest①">CountersignatureRequest</a>
 carrying the agreement IRI, the agreement <strong>itself</strong> — as canonical N-Quads or Turtle, never a JSON
 projection, because the document is what the signature is checked against — and the assigner’s
 signature. The Handler applies exactly the checks above and answers <code>201</code> with the assignee’s
-<a data-link-type="dfn" href="#countersignature" id="ref-for-countersignature">Countersignature</a>, or <code>422</code> with a <a data-link-type="dfn" href="#countersignaturerefused" id="ref-for-countersignaturerefused">CountersignatureRefused</a>. The station then stores both
+<a data-link-type="dfn" href="#countersignature" id="ref-for-countersignature①">Countersignature</a>, or <code>422</code> with a <a data-link-type="dfn" href="#countersignaturerefused" id="ref-for-countersignaturerefused①">CountersignatureRefused</a>. The station then stores both
 signatures, emits <code>negotiation.active</code> and queues the run. Because no wait occurred, the stream
 MUST NOT contain <code>negotiation.awaiting-signature</code>; instead <code>negotiation.active</code> carries
 <code>signatureRoute: station-initiated</code> and <code>dispatchMode: poll</code> in its justification’s evidence, so
@@ -2841,7 +3392,7 @@ names the location and nothing else.</p>
    <h2 class="heading settled" data-level="10" id="reporting"><span class="secno">10. </span><span class="content">Reporting</span><a class="self-link" href="#reporting"></a></h2>
    <h3 class="heading settled" data-level="10.1" id="reporting-events"><span class="secno">10.1. </span><span class="content">Events</span><a class="self-link" href="#reporting-events"></a></h3>
    <p>Every decision a station takes and every state change of a visit MUST be emitted as a
-<a data-link-type="dfn" href="#visit-event" id="ref-for-visit-event">visit event</a> (ADR-027). The ordered event stream is the source of truth for the Handler’s view
+<a data-link-type="dfn" href="#visit-event" id="ref-for-visit-event①">visit event</a> (ADR-027). The ordered event stream is the source of truth for the Handler’s view
 of the run and for the audit trail a controller reads; the Handler needs nothing else to drive its
 itinerary map and its completeness statement. Delivery is <strong>at least once</strong>: a Handler MUST
 de-duplicate on <code>id</code> and order on <code>sequence</code>. A station MAY batch events in one callback if all
@@ -2853,7 +3404,7 @@ Server-Sent Events, each <code>data:</code> line one event object and <code>id:<
 agreement or station policy it came from, and evidence — counts, digests, cell counts, <strong>never
 record-level content</strong>.</p>
    <h3 class="heading settled" data-level="10.2" id="reporting-result"><span class="secno">10.2. </span><span class="content">Result and artefacts</span><a class="self-link" href="#reporting-result"></a></h3>
-   <p>The <a data-link-type="dfn" href="#visit-result-envelope" id="ref-for-visit-result-envelope">visit-result envelope</a> is available once the visit is in a terminal state: under callback
+   <p>The <a data-link-type="dfn" href="#visit-result-envelope" id="ref-for-visit-result-envelope①">visit-result envelope</a> is available once the visit is in a terminal state: under callback
 the station <code>PUT</code>s it to <code>{callbackUrl}/result</code>; under poll the Handler fetches
 <code>GET /visits/{visitId}/result</code>, which answers <code>409</code> while the visit is not yet terminal. For a
 non-success outcome the envelope is returned with an empty <code>result</code>, the outcome in <code>state</code> and the
@@ -3995,7 +4546,7 @@ endpoint. Authentication: <a href="#security">§ 15 Security</a>.</p>
   
      <tr>
       <td><code>GET /visits/{visitId}</code>
-      <td>Current <a data-link-type="dfn" href="#visitstatus" id="ref-for-visitstatus①">VisitStatus</a>.
+      <td>Current <a data-link-type="dfn" href="#visitstatus" id="ref-for-visitstatus②">VisitStatus</a>.
       <td>200 · 404
   
      <tr>
@@ -4005,7 +4556,7 @@ endpoint. Authentication: <a href="#security">§ 15 Security</a>.</p>
   
      <tr>
       <td><code>GET /visits/{visitId}/result</code>
-      <td>The <a data-link-type="dfn" href="#visit-result-envelope" id="ref-for-visit-result-envelope①">visit-result envelope</a> once terminal.
+      <td>The <a data-link-type="dfn" href="#visit-result-envelope" id="ref-for-visit-result-envelope②">visit-result envelope</a> once terminal.
       <td>200 · 409 not yet terminal
   
      <tr>
@@ -4020,7 +4571,7 @@ endpoint. Authentication: <a href="#security">§ 15 Security</a>.</p>
   
      <tr>
       <td><code>POST /visits/{visitId}/agreement/signature</code>
-      <td>The assignee signs (<a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, push shape). Body: <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature①">AgreementSignature</a>.
+      <td>The assignee signs (<a href="#negotiation-signatures-exchange">§ 7.4.3 The exchange, in two shapes</a>, push shape). Body: <a data-link-type="dfn" href="#agreementsignature" id="ref-for-agreementsignature③">AgreementSignature</a>.
       <td>200 active and queued · 404 nothing awaiting a signature · 409 already signed · 422 refused, naming which of the four
   
      <tr>
@@ -4078,8 +4629,8 @@ station’s own traffic.</p>
   
      <tr>
       <td><code>POST /visits/{visitId}/agreement</code>
-      <td>Poll-dispatch signature exchange: the station hands over the agreement it derived and signed; the Handler signs the other side in the same response. Body: <a data-link-type="dfn" href="#countersignaturerequest" id="ref-for-countersignaturerequest①">CountersignatureRequest</a>.
-      <td>201 <a data-link-type="dfn" href="#countersignature" id="ref-for-countersignature①">Countersignature</a> · 404 · 409 already countersigned · 422 <a data-link-type="dfn" href="#countersignaturerefused" id="ref-for-countersignaturerefused①">CountersignatureRefused</a>
+      <td>Poll-dispatch signature exchange: the station hands over the agreement it derived and signed; the Handler signs the other side in the same response. Body: <a data-link-type="dfn" href="#countersignaturerequest" id="ref-for-countersignaturerequest②">CountersignatureRequest</a>.
+      <td>201 <a data-link-type="dfn" href="#countersignature" id="ref-for-countersignature②">Countersignature</a> · 404 · 409 already countersigned · 422 <a data-link-type="dfn" href="#countersignaturerefused" id="ref-for-countersignaturerefused②">CountersignatureRefused</a>
 
    </table>
    <h2 class="heading settled" data-level="15" id="security"><span class="secno">15. </span><span class="content">Security</span><a class="self-link" href="#security"></a></h2>
@@ -4349,6 +4900,15 @@ resolve.</p>
    <h2 class="heading no-num settled" id="changes"><span class="content">Appendix C: Change history</span><a class="self-link" href="#changes"></a></h2>
    <p><em>This appendix is non-normative.</em></p>
    <dl>
+    <dt data-md>16 October 2026 — conformance criteria
+    <dd data-md>
+     <p><a href="#conformance">§ 2 Conformance</a> gains the numbered criteria of <a href="#criteria">§ 2.3 Criteria</a> — STA for every station, PUSH
+and POLL for the two dispatch classes, HND for the Handler — each naming the section that
+states it and the fixture, checker or harness that checks it; the optional features; and the
+form of a conformance statement. <code>GET /agreements/{agreementId}</code> is now listed among the
+operations a push-dispatch station implements, which the signature exchange already required.
+No normative requirement changed; one indicative sentence (<a href="#parties">§ 4 Parties and identifiers</a>, the self-description
+advertisement) now carries the key word it was always read with.</p>
     <dt data-md>16 October 2026 — version 1, editors' draft
     <dd data-md>
      <p>First publication as a specification, written against <code>fdt-commons</code> 0.75.0 and the running
@@ -4360,39 +4920,6 @@ lineage rule and <code>https</code>-only locations; the agreement lifecycle has 
 state; and the derivation rule binds the agreement’s parties to the offer’s and the request’s.</p>
    </dl>
   </main>
-  <div data-fill-with="conformance">
-   <h2 class="heading no-num no-ref settled" id="conformance"><span class="content">
-    Conformance</span><a class="self-link" href="#conformance"></a></h2>
-   <p>
-            Conformance requirements are expressed with a combination of descriptive assertions and RFC 2119 terminology.
-            The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL”
-            in the normative parts of this document
-            are to be interpreted as described in RFC 2119.
-            However, for readability,
-            these words do not appear in all uppercase letters in this specification.
-
-        </p>
-   <p>
-            All of the text of this specification is normative
-            except sections explicitly marked as non-normative, examples, and notes. <a data-link-type="biblio" href="#biblio-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">[RFC2119]</a>
-
-        </p>
-   <p>
-            Examples in this specification are introduced with the words “for example”
-            or are set apart from the normative text with <code>class="example"</code>, like this:
-
-        </p>
-   <div class="example" id="example-example"><a class="self-link" href="#example-example"></a>
-            This is an example of an informative example.
-        </div>
-   <p>
-            Informative notes begin with the word “Note”
-            and are set apart from the normative text with <code>class="note"</code>, like this:
-
-        </p>
-   <p class="note" role="note">
-            Note, this is an informative note.</p>
-  </div>
 <script>
 (function() {
   "use strict";
@@ -4550,10 +5077,10 @@ state; and the derivation rule binds the agreement’s parties to the offer’s 
    <li><a href="#pep-3">PEP 3</a><span>, in § 3</span>
    <li><a href="#phase">phase</a><span>, in § 3</span>
    <li><a href="#plan">plan</a><span>, in § 3</span>
-   <li><a href="#poll-dispatch-station">Poll-dispatch station</a><span>, in § 2</span>
+   <li><a href="#poll-dispatch-station">Poll-dispatch station</a><span>, in § 2.1</span>
    <li><a href="#presentation">presentation</a><span>, in § 12.4</span>
    <li><a href="#problem">Problem</a><span>, in § 12.5</span>
-   <li><a href="#push-dispatch-station">Push-dispatch station</a><span>, in § 2</span>
+   <li><a href="#push-dispatch-station">Push-dispatch station</a><span>, in § 2.1</span>
    <li><a href="#refused">Refused</a><span>, in § 11</span>
    <li><a href="#rejected">Rejected</a><span>, in § 11</span>
    <li><a href="#reporting-mode">reporting mode</a><span>, in § 3</span>
@@ -4563,7 +5090,7 @@ state; and the derivation rule binds the agreement’s parties to the offer’s 
    <li><a href="#timedout">TimedOut</a><span>, in § 11</span>
    <li><a href="#train">train</a><span>, in § 1</span>
    <li><a href="#train-handler">Train Handler</a><span>, in § 1</span>
-   <li><a href="#train-handler-conformance-class">Train Handler (conformance class)</a><span>, in § 2</span>
+   <li><a href="#train-handler-conformance-class">Train Handler (conformance class)</a><span>, in § 2.1</span>
    <li><a href="#visit">visit</a><span>, in § 1</span>
    <li><a href="#visit-descriptor">visit descriptor</a><span>, in § 12.1</span>
    <li><a href="#visit-event">visit event</a><span>, in § 12.2</span>
@@ -4812,13 +5339,13 @@ function parseHTML(markup) {
 {
 let dfnPanelData = {
 "agreement": {"dfnID":"agreement","dfnText":"agreement","external":false,"refSections":[],"url":"#agreement"},
-"agreementsignature": {"dfnID":"agreementsignature","dfnText":"AgreementSignature","external":false,"refSections":[{"refs":[{"id":"ref-for-agreementsignature"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-agreementsignature\u2460"}],"title":"13. Station API"}],"url":"#agreementsignature"},
+"agreementsignature": {"dfnID":"agreementsignature","dfnText":"AgreementSignature","external":false,"refSections":[{"refs":[{"id":"ref-for-agreementsignature"}],"title":"2.3.2. A push-dispatch station"},{"refs":[{"id":"ref-for-agreementsignature\u2460"}],"title":"2.3.4. A Train Handler"},{"refs":[{"id":"ref-for-agreementsignature\u2461"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-agreementsignature\u2462"}],"title":"13. Station API"}],"url":"#agreementsignature"},
 "attempt": {"dfnID":"attempt","dfnText":"attempt","external":false,"refSections":[],"url":"#attempt"},
-"canonical-form": {"dfnID":"canonical-form","dfnText":"canonical form","external":false,"refSections":[{"refs":[{"id":"ref-for-canonical-form"}],"title":"7.4.1. What is signed"}],"url":"#canonical-form"},
+"canonical-form": {"dfnID":"canonical-form","dfnText":"canonical form","external":false,"refSections":[{"refs":[{"id":"ref-for-canonical-form"}],"title":"2.3.1. Every Data Station"},{"refs":[{"id":"ref-for-canonical-form\u2460"}],"title":"7.4.1. What is signed"}],"url":"#canonical-form"},
 "checkpoint": {"dfnID":"checkpoint","dfnText":"checkpoint","external":false,"refSections":[],"url":"#checkpoint"},
-"countersignature": {"dfnID":"countersignature","dfnText":"Countersignature","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignature"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignature\u2460"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignature"},
-"countersignaturerefused": {"dfnID":"countersignaturerefused","dfnText":"CountersignatureRefused","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignaturerefused"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignaturerefused\u2460"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignaturerefused"},
-"countersignaturerequest": {"dfnID":"countersignaturerequest","dfnText":"CountersignatureRequest","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignaturerequest"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignaturerequest\u2460"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignaturerequest"},
+"countersignature": {"dfnID":"countersignature","dfnText":"Countersignature","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignature"}],"title":"2.3.4. A Train Handler"},{"refs":[{"id":"ref-for-countersignature\u2460"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignature\u2461"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignature"},
+"countersignaturerefused": {"dfnID":"countersignaturerefused","dfnText":"CountersignatureRefused","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignaturerefused"}],"title":"2.3.4. A Train Handler"},{"refs":[{"id":"ref-for-countersignaturerefused\u2460"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignaturerefused\u2461"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignaturerefused"},
+"countersignaturerequest": {"dfnID":"countersignaturerequest","dfnText":"CountersignatureRequest","external":false,"refSections":[{"refs":[{"id":"ref-for-countersignaturerequest"}],"title":"2.3.3. A poll-dispatch station"},{"refs":[{"id":"ref-for-countersignaturerequest\u2460"}],"title":"7.4.3. The exchange, in two shapes"},{"refs":[{"id":"ref-for-countersignaturerequest\u2461"}],"title":"14. Handler API \u2014 the station-facing surface"}],"url":"#countersignaturerequest"},
 "data-station": {"dfnID":"data-station","dfnText":"Data Station","external":false,"refSections":[],"url":"#data-station"},
 "delivered": {"dfnID":"delivered","dfnText":"Delivered","external":false,"refSections":[],"url":"#delivered"},
 "dispatch-mode": {"dfnID":"dispatch-mode","dfnText":"dispatch mode","external":false,"refSections":[],"url":"#dispatch-mode"},
@@ -4838,7 +5365,7 @@ let dfnPanelData = {
 "plan": {"dfnID":"plan","dfnText":"plan","external":false,"refSections":[],"url":"#plan"},
 "poll-dispatch-station": {"dfnID":"poll-dispatch-station","dfnText":"Poll-dispatch station","external":false,"refSections":[],"url":"#poll-dispatch-station"},
 "presentation": {"dfnID":"presentation","dfnText":"presentation","external":false,"refSections":[{"refs":[{"id":"ref-for-presentation"}],"title":"12.2. Visit event"},{"refs":[{"id":"ref-for-presentation\u2460"}],"title":"12.3. Visit-result envelope"}],"url":"#presentation"},
-"problem": {"dfnID":"problem","dfnText":"Problem","external":false,"refSections":[{"refs":[{"id":"ref-for-problem"}],"title":"6.1. Push dispatch"}],"url":"#problem"},
+"problem": {"dfnID":"problem","dfnText":"Problem","external":false,"refSections":[{"refs":[{"id":"ref-for-problem"}],"title":"2.3.1. Every Data Station"},{"refs":[{"id":"ref-for-problem\u2460"}],"title":"2.3.2. A push-dispatch station"},{"refs":[{"id":"ref-for-problem\u2461"}],"title":"2.3.3. A poll-dispatch station"},{"refs":[{"id":"ref-for-problem\u2462"}],"title":"6.1. Push dispatch"}],"url":"#problem"},
 "push-dispatch-station": {"dfnID":"push-dispatch-station","dfnText":"Push-dispatch station","external":false,"refSections":[],"url":"#push-dispatch-station"},
 "refused": {"dfnID":"refused","dfnText":"Refused","external":false,"refSections":[],"url":"#refused"},
 "rejected": {"dfnID":"rejected","dfnText":"Rejected","external":false,"refSections":[],"url":"#rejected"},
@@ -4852,9 +5379,9 @@ let dfnPanelData = {
 "train-handler-conformance-class": {"dfnID":"train-handler-conformance-class","dfnText":"Train Handler","external":false,"refSections":[],"url":"#train-handler-conformance-class"},
 "visit": {"dfnID":"visit","dfnText":"visit","external":false,"refSections":[],"url":"#visit"},
 "visit-descriptor": {"dfnID":"visit-descriptor","dfnText":"visit descriptor","external":false,"refSections":[{"refs":[{"id":"ref-for-visit-descriptor"}],"title":"5. Overview of a visit"},{"refs":[{"id":"ref-for-visit-descriptor\u2460"}],"title":"13. Station API"}],"url":"#visit-descriptor"},
-"visit-event": {"dfnID":"visit-event","dfnText":"visit event","external":false,"refSections":[{"refs":[{"id":"ref-for-visit-event"}],"title":"10.1. Events"}],"url":"#visit-event"},
-"visit-result-envelope": {"dfnID":"visit-result-envelope","dfnText":"visit-result envelope","external":false,"refSections":[{"refs":[{"id":"ref-for-visit-result-envelope"}],"title":"10.2. Result and artefacts"},{"refs":[{"id":"ref-for-visit-result-envelope\u2460"}],"title":"13. Station API"}],"url":"#visit-result-envelope"},
-"visitstatus": {"dfnID":"visitstatus","dfnText":"VisitStatus","external":false,"refSections":[{"refs":[{"id":"ref-for-visitstatus"}],"title":"6.1. Push dispatch"},{"refs":[{"id":"ref-for-visitstatus\u2460"}],"title":"13. Station API"}],"url":"#visitstatus"},
+"visit-event": {"dfnID":"visit-event","dfnText":"visit event","external":false,"refSections":[{"refs":[{"id":"ref-for-visit-event"}],"title":"2.3.1. Every Data Station"},{"refs":[{"id":"ref-for-visit-event\u2460"}],"title":"10.1. Events"}],"url":"#visit-event"},
+"visit-result-envelope": {"dfnID":"visit-result-envelope","dfnText":"visit-result envelope","external":false,"refSections":[{"refs":[{"id":"ref-for-visit-result-envelope"}],"title":"2.3.1. Every Data Station"},{"refs":[{"id":"ref-for-visit-result-envelope\u2460"}],"title":"10.2. Result and artefacts"},{"refs":[{"id":"ref-for-visit-result-envelope\u2461"}],"title":"13. Station API"}],"url":"#visit-result-envelope"},
+"visitstatus": {"dfnID":"visitstatus","dfnText":"VisitStatus","external":false,"refSections":[{"refs":[{"id":"ref-for-visitstatus"}],"title":"2.3.2. A push-dispatch station"},{"refs":[{"id":"ref-for-visitstatus\u2460"}],"title":"6.1. Push dispatch"},{"refs":[{"id":"ref-for-visitstatus\u2461"}],"title":"13. Station API"}],"url":"#visitstatus"},
 };
 
 document.addEventListener("DOMContentLoaded", ()=>{

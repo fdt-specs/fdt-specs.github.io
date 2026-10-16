@@ -20,6 +20,7 @@ Repository: fdt-specs/fdt-specs.github.io
 Abstract: This document describes the general architecture of the FAIR Data Train (FDT): the roles and the components of an FDT ecosystem, how the components interact — trains travel to Data Stations and run there under agreements negotiated on arrival, behind policy checkpoints that decide what may leave — and the open standards each part is built on. It is the entry point to the FDT specifications; the protocol between a Data Station and a Train Handler is specified in the companion FDT Visit Protocol.
 Markup Shorthands: markdown yes, css no, idl no, dfn yes, biblio yes
 Local Boilerplate: header yes, status yes, copyright yes
+Boilerplate: conformance no
 Complain About: missing-example-ids no
 </pre>
 
@@ -80,6 +81,17 @@ Complain About: missing-example-ids no
   }
 }
 </pre>
+
+<style>
+/* Conformance criteria: a reading table, not a data table — left-aligned, the identifier on one line. */
+table.criteria { table-layout: fixed; width: 100%; }
+table.criteria th, table.criteria td { text-align: left; vertical-align: top; padding: .5em .6em; }
+table.criteria th:first-child, table.criteria td:first-child { width: 4.5em; white-space: nowrap; font-weight: bold; }
+table.criteria th:nth-child(2), table.criteria td:nth-child(2) { width: 42%; }
+table.criteria th:nth-child(3), table.criteria td:nth-child(3) { width: 12%; }
+table.criteria td code { overflow-wrap: anywhere; }
+</style>
+
 
 # Introduction # {#intro}
 
@@ -157,6 +169,7 @@ to date with what has since been built, and the following names and ideas change
   <tr><td>—<td>**Train Depot**<td>Trains are contracted assets with an identity, a creator's offer and a verifiable payload. The Depot is the authority for a train; a station resolves a train there before running it.
   <tr><td>—<td>**Linkage Station**, **Alignment Station**<td>Two station types for the two cross-organisational services a multi-station analysis needs: identifier translation between pseudonym spaces, and vocabulary alignment.
   <tr><td>—<td>**Visit Protocol** [[FDT-VISIT-PROTOCOL]]<td>The Content Interaction Interface of version 0.1 was a heading. It is now a specification: how a train is dispatched, how an agreement is negotiated and signed by both parties on arrival, how every decision is reported, and how a result leaves.
+  <tr><td>—<td>**Conformance criteria**<td>Version 0.1 named no requirement an implementation could be checked against. [[#conformance]] now defines conforming Data Stations, Train Handlers and Linkage Stations by numbered criteria, each tied to the shape, checker or harness that decides it.
   <tr><td>Agreement signed by the station<td>Agreement signed by **both parties**<td>A record kept by one party and signed by that party alone proves nothing to a third party. Each party signs the same canonical form.
 </table>
 
@@ -447,11 +460,93 @@ exercise it.
   <tr><td>Verifiable Credentials<td>The identity model is kept credential-ready so that W3C Verifiable Credentials can replace bearer tokens without a schema migration (ADR-010); eligibility evidence is where they would first apply (ADR-031).<td>declared
 </table>
 
-# Conformance classes # {#conformance-classes}
+# Conformance # {#conformance}
 
-This document defines no conformance classes of its own. A **Data Station** conforms to the FAIR
-Data Train architecture when it conforms to the Visit Protocol [[!FDT-VISIT-PROTOCOL]] as a
-station and publishes the metadata and self-description of [[#metadatainterface]] and
-[[#stationinterface]]; a **Train Handler** conforms when it conforms to the Visit Protocol as a
-Handler. Conformance requirements for the other components will be specified in their own
-documents as those are published.
+## Conformance classes ## {#conformance-classes}
+
+This document defines conformance for the two components every itinerary needs, and states what
+each must do beyond the Visit Protocol. The key words MUST, MUST NOT, SHOULD and MAY are those of
+[[!RFC2119]]. The protocol-level requirements — dispatch, negotiation, signatures, checkpoints,
+events, envelopes, hand-over — are the Visit Protocol's and are collected as numbered criteria
+there [[!FDT-VISIT-PROTOCOL]]; the criteria below are the architecture's own and are numbered
+apart so that a conformance claim can cite both without ambiguity.
+
+: <dfn export>Conforming Data Station</dfn>
+:: A component that conforms to the Visit Protocol as a push-dispatch station or as a
+    poll-dispatch station, and meets every criterion of [[#criteria-ds]].
+: <dfn export>Conforming Train Handler</dfn>
+:: A component that conforms to the Visit Protocol as a Train Handler, and meets every criterion
+    of [[#criteria-th]].
+: <dfn export>Conforming Linkage Station</dfn>
+:: A conforming Data Station whose interaction mechanism is identifier translation, and which
+    meets every criterion of [[#criteria-ls]].
+
+Conformance for the Individual Gateway, the FDT Registry, the Train Depot and the Alignment
+Station will be specified in their own documents as those are published; their interfaces exist
+today only as OpenAPI documents and fixtures in `fdt-commons` [[FDT-COMMONS]], and a claim about
+them is a claim against those artefacts.
+
+## How the criteria are checked ## {#criteria-checking}
+
+The criteria below are checked in the three ways the Visit Protocol defines: by **schema** — a
+SHACL shape or JSON Schema in `fdt-commons` decides it, and the fixtures named are what an
+implementation must accept and the counter-examples it must refuse, each with the message the
+shape carries; by **rule** — a checker in `fdt-commons/tools` executes it over the fixtures
+named; or by **harness** — a behaviour observable only against a live counterpart, for which no
+third-party-runnable harness is yet published and the reference implementation's test suites are
+the only published evidence. The artefacts are those pinned by the Visit Protocol's Appendix B.
+
+## Criteria for a Data Station ## {#criteria-ds}
+
+<table class="data criteria">
+  <thead><tr><th>Id<th>Requirement<th>Stated in<th>Checked by
+  <tbody>
+  <tr id="ds-1"><td>DS-1<td>A Data Station MUST conform to the Visit Protocol as a push-dispatch station, as a poll-dispatch station, or as both.<td>[[#contentinteractioninterface]]<td>The Visit Protocol's criteria.
+  <tr id="ds-2"><td>DS-2<td>A Data Station MUST publish a self-description typed `fdt-o:DataStation` stating its type, the interaction mechanisms it supports, the networks it is a member of with the governance authority of each, the dispatch modes it accepts, the protocol versions it implements and links to its metadata and catalogue; its dispatch endpoint MUST be a `dcat:DataService` whose `dct:conformsTo` names the Visit Protocol version.<td>[[#stationinterface]]<td>Schema — `fdts:StationSelfDescriptionShape`, `fdts:MembershipShape`, `fdts:DataServiceShape` (`station-catalog.shapes.ttl`) over the stations of `network-and-stations.ttl`. Harness for the live document.
+  <tr id="ds-3"><td>DS-3<td>A Data Station MUST publish a catalogue typed `fdt-o:StationCatalog`, published by itself, listing the hosted datasets (`fdt-o:HostedDataset`) it serves and the parts (`fdt-o:DatasetPart`) a controller offers in their own right; every dataset and part MUST carry at least one distribution per interaction mechanism it is reachable by, an ODRL offer by its controller, and a `dcat:theme` that is a concept IRI.<td>[[#metadatainterface]]<td>Schema — `fdts:StationCatalogShape`, `fdts:DatasetShape`, `fdts:DatasetPartShape`, `fdts:GovernedDataThemeShape`, `fdts:MechanismDistributionShape`, refusing `dataset-without-offer.ttl`, `dataset-part-without-offer.ttl`, `theme-written-as-a-keyword.ttl`, `offer-whose-target-no-graph-describes.ttl` (`published-graph.shapes.ttl`).
+  <tr id="ds-4"><td>DS-4<td>For every dataset and part a Data Station MUST publish what its data conforms to — at least one SHACL node shape named by `dct:conformsTo` — and MUST serve those shapes beside the catalogue, so that a train's data requirement can be matched against them by structural coverage.<td>[[#metadatainterface]], [[#registry]]<td>Schema — `fdts:DatasetShape` refusing `dataset-without-a-shape.ttl`. Rule — `coverage.py check` against `tests/coverage-expectations.json`, which records the misses as well as the hits.
+  <tr id="ds-5"><td>DS-5<td>A Data Station MUST follow the FAIR Data Point specification for the structure and navigation of its metadata.<td>[[#metadatainterface]]<td>Harness.
+  <tr id="ds-6"><td>DS-6<td>Publishing a catalogue entry MUST grant nothing: a Data Station MUST negotiate every access on arrival against the controller's offer, per visit.<td>[[#metadatainterface]], [[#agreements]]<td>Harness (the Visit Protocol's negotiation criteria).
+  <tr id="ds-7"><td>DS-7<td>A Data Station MUST evaluate the controller's offers for the network a visit runs under and for no other, MUST record that network in every agreement, and MUST verify a dispatching party's credential against the identity providers that network trusts.<td>[[#networks]]<td>Schema — `fdts:PolicyCommonShape` (`fdt-p:underNetwork` required of every offer, request and agreement). Harness.
+  <tr id="ds-8"><td>DS-8<td>In a network that states a station in it may not conclude a negotiation without a person, a Data Station MUST neither grant nor refuse by machine: it MUST evaluate, produce a recommendation with its evidence, and put the case to a person.<td>[[#networks]]<td>Schema — `fdts:NetworkShape` refusing `network-that-does-not-say-who-may-decide.ttl`; the decision shapes of `policy.shapes.ttl` refusing `automatic-agreement-naming-a-decider.ttl`, `human-decision-with-nothing-to-review.ttl`. Harness.
+  <tr id="ds-9"><td>DS-9<td>A Data Station MUST resolve a train at its Depot before anything runs and verify that the payload it was handed is the one the Depot describes; it MUST treat a train as an executable asset and MUST NOT treat it as a `dcat:Dataset`.<td>[[#depot]], [[#components]]<td>Schema — `fdts:TrainOfferShape` refusing `train-typed-as-dataset.ttl`. Rule — `payloads.py check`.
+  <tr id="ds-10"><td>DS-10<td>A Data Station MUST enforce policy at the three checkpoints and MUST emit every decision it takes as an event with a justification; it MUST NOT change the state of a visit silently.<td>[[#contentinteractioninterface]], [[#dispatch]]<td>The Visit Protocol's criteria.
+  <tr id="ds-11"><td>DS-11<td>Record-level data MUST NOT leave a Data Station except to another station, under an agreement, by location and digest; it MUST NOT appear in a result, an artefact, an event or a justification.<td>[[#trainhandler]], [[#state-between-hops]]<td>Schema — `fdts:VisitShape` refusing `visit-record-level-onward.ttl`. Rule — `inspection.py check` refusing `record-level-onward.json`.
+  <tr id="ds-12"><td>DS-12<td>A Data Station MUST report every visit's outcome in one of the seven words of [[#dispatch]], exactly, in its events, envelopes, logs and user interfaces.<td>[[#dispatch]]<td>The Visit Protocol's criteria.
+</table>
+
+## Criteria for a Train Handler ## {#criteria-th}
+
+<table class="data criteria">
+  <thead><tr><th>Id<th>Requirement<th>Stated in<th>Checked by
+  <tbody>
+  <tr id="th-1"><td>TH-1<td>A Train Handler MUST conform to the Visit Protocol as a Train Handler.<td>[[#trainhandler]]<td>The Visit Protocol's criteria.
+  <tr id="th-2"><td>TH-2<td>Every plan a Train Handler runs MUST conform to the run-description shapes: a train, its parameter values, an itinerary with its pattern, a failure policy, an approval wait in days or less, and the consumer's purpose as a request template; an open-ended pattern MUST carry a budget and a stop condition; a two-phase plan MUST carry the condition that selects the second phase's stations.<td>[[#plan-run-visit]]<td>Schema — `fdts:PlanShape`, `fdts:ItineraryShape`, `fdts:OpenEndedItineraryShape`, `fdts:TwoPhaseItineraryShape`, `fdts:FailurePolicyShape` (`run.shapes.ttl`) over the plans of `trains-and-plans.ttl` and the `plan-*.jsonld` fixtures, refusing `plan-discovery-without-budget.ttl`, `two-phase-whose-second-phase-selects-nobody.ttl`, `plan-approval-wait-of-one-month.ttl`, `plan-approval-wait-typed-xsd-duration.ttl`.
+  <tr id="th-3"><td>TH-3<td>A station selector MUST state the data a station must hold, as a SHACL model, and a Train Handler MUST select stations by structural coverage of that requirement by the shapes each station publishes — acting on what a station publishes, never on a registry's entry alone.<td>[[#registry]], [[#plan-run-visit]]<td>Schema — `fdts:StationSelectorShape` refusing `selector-without-data-requirement.ttl`. Rule — `coverage.py check` against `tests/coverage-expectations.json`. Harness.
+  <tr id="th-4"><td>TH-4<td>A Train Handler MUST dispatch query and API trains orchestrated only.<td>[[#state-between-hops]]<td>Schema — `fdts:QueryTrainCoordinationShape` refusing `plan-query-train-choreographed.ttl`.
+  <tr id="th-5"><td>TH-5<td>A Train Handler MUST resolve a train at its Depot and dispatch only a train its owner holds under the creator's licence, concluded as a two-party agreement signed by the creator and by the owner; it MUST NOT dispatch a withdrawn train.<td>[[#depot]]<td>Schema — `train-offer.shapes.ttl` (`fdts:TrainOfferShape` and the withdrawal shape of ADR-036) over `train-taken.ttl`, refusing `train-taken-from-someone-who-did-not-write-it.ttl`, `train-offer-assigned-by-its-depot.ttl`, `train-withdrawn-by-nobody.ttl`; Rule — `derivation.py` refusing `depot-signed-the-creators-side.ttl`. The Depot interface itself is specified only by `train-depot-api.yaml` and `protocol/train-publication.md` until its document is published.
+  <tr id="th-6"><td>TH-6<td>A Train Handler MUST hold non-personal, aggregate results only — envelopes, events, aggregates and the names of hand-overs — and MUST NOT store record-level data.<td>[[#trainhandler]]<td>The Visit Protocol's criteria. Harness.
+  <tr id="th-7"><td>TH-7<td>A Train Handler MUST produce a completeness statement for every run that did not deliver from every intended station, naming every intended station and, for each, its outcome in the seven words verbatim, its cause and the station's stated reason.<td>[[#trainhandler]], [[#dispatch]]<td>Schema — `fdts:RunShape`, `fdts:CompletenessShape` refusing `run-partial-without-completeness.ttl`; `run-state.schema.json` over `run-state-two-phase.json`. Harness.
+  <tr id="th-8"><td>TH-8<td>A Train Handler MUST record each run as PROV-O provenance: the run an activity, its visits sub-activities, the merged result a derivation from the delivered visits.<td>[[#trainhandler]], [[#standards]]<td>Harness. No shape in `fdt-commons` 0.75.0 constrains the run record beyond `fdts:RunShape`; this is a recorded gap of the conformance material.
+  <tr id="th-9"><td>TH-9<td>A Train Handler MUST visit under its own credential, issued by a provider the visit's network trusts, and MUST NOT forward a consumer's credential to a station.<td>[[#networks]]<td>The Visit Protocol's criteria.
+</table>
+
+## Criteria for a Linkage Station ## {#criteria-ls}
+
+<table class="data criteria">
+  <thead><tr><th>Id<th>Requirement<th>Stated in<th>Checked by
+  <tbody>
+  <tr id="ls-1"><td>LS-1<td>A Linkage Station MUST be typed `fdt-o:LinkageStation` in addition to `fdt-o:DataStation`, MUST publish a catalogue, and MUST publish a `dcat:DataService` declaring the identifier-translation mechanism.<td>[[#linkage]]<td>Schema — `fdts:LinkageStationServiceShape` refusing `linkage-station-that-publishes-no-catalogue.ttl`, `linkage-station-that-publishes-no-translation-service.ttl`.
+  <tr id="ls-2"><td>LS-2<td>A Linkage Station MUST be visited as a hop under its own agreement, through the Visit Protocol.<td>[[#linkage]], [[#agreements]]<td>Schema — `visit-descriptor-ttg-hop3.json`, `visit-result-ttg-hop2.json`. Harness.
+  <tr id="ls-3"><td>LS-3<td>A translation MUST return the identifiers of one pseudonym space only and never the pair, in an order that discloses no correspondence with the order asked, and the count it reports MUST be the count it released.<td>[[#linkage]]<td>Schema — `translation-envelope.schema.json` over `translation-result-ttg-hop2.json`. Rule — `inspection.py check` refusing `translation-that-returns-the-space-it-was-given.json`, `translation-in-the-order-it-was-asked.json`, `translation-whose-count-is-not-what-it-released.json`.
+  <tr id="ls-4"><td>LS-4<td>A Linkage Station MUST hand translated state to the next station by location and digest and never by value.<td>[[#state-between-hops]]<td>The Visit Protocol's criteria (`onward.handedOverDigest`, the inbound rules).
+</table>
+
+## Conformance statement ## {#conformance-statement}
+
+An implementation claims conformance to this architecture by stating the class claimed, the
+Visit Protocol conformance statement it rests on, the `fdt-commons` version and commit it was
+validated against, and, for each criterion above, that it accepts the fixtures named and refuses
+the counter-examples named with their recorded messages, or the evidence it offers where only a
+harness can decide. The reference implementation is the only implementation that can make a
+third-party-verified claim today, and this document says so rather than imply otherwise.
